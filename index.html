@@ -155,7 +155,7 @@
   </section>
 
   <section id="tab-import" class="tab">
-    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Not connected yet — fill in the details below.</div>
+    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from GitHub. Saving changes requires a GitHub token.</div>
 
     <div class="field">
       <label for="ghOwner">GitHub username</label>
@@ -174,7 +174,7 @@
       <input type="text" id="ghWishPath" placeholder="wishlist.json" autocomplete="off" value="wishlist.json">
     </div>
     <div class="field">
-      <label for="ghToken">GitHub personal access token</label>
+      <label for="ghToken">GitHub personal access token <span style="color:var(--ink-dim);font-weight:normal;">(only needed to save changes)</span></label>
       <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
     <div class="field">
@@ -182,7 +182,7 @@
       <input type="password" id="tmdbToken" placeholder="eyJ..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
     <div style="display:flex; gap:10px;">
-      <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Connect</button>
+      <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Save settings</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Sync now</button>
     </div>
     <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-e — TMDB-only cover lookup for movies, collections and TV. If this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
@@ -207,7 +207,7 @@
         <li>Generate it, copy it, and paste it above. It's stored only on this device.</li>
       </ol>
     </details>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Library and wishlist are now saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
+    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">The library is loaded automatically when the app opens. The repository must be public for token-free reading. A GitHub token is only needed when the app saves changes. Library and wishlist are saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
 
     <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
@@ -270,10 +270,15 @@
   let cacheState = loadCache() || { cfg: null, items: [], wishlist: [], itemsPending: false, wishlistPending: false, timestamp: null };
 
   function configComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath && c.token && c.tmdbToken); }
+  function readConfigComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath); }
   function sameRepo(c1, c2) { return c1 && c2 && c1.owner === c2.owner && c1.repo === c2.repo && c1.libraryPath === c2.libraryPath && c1.wishlistPath === c2.wishlistPath; }
   function pathFor(kind) { return kind === 'items' ? cfg.libraryPath : cfg.wishlistPath; }
   function apiUrlFor(path) { return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path)}`; }
-  function ghHeaders() { return { Authorization: `token ${cfg.token}`, Accept: 'application/vnd.github+json' }; }
+  function ghHeaders(includeAuth = true) {
+    const h = { Accept: 'application/vnd.github+json' };
+    if (includeAuth && cfg.token) h.Authorization = `token ${cfg.token}`;
+    return h;
+  }
   function b64Encode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m,p)=>String.fromCharCode('0x'+p))); }
   function b64Decode(str) { return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
   function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -301,7 +306,7 @@
   }
 
   async function fetchFile(kind) {
-    const res = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
+    const res = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders(false) });
     if (res.status === 200) { const gh = await res.json(); sha[kind] = gh.sha; return { ok: true, raw: gh.content ? JSON.parse(b64Decode(gh.content)) : null }; }
     if (res.status === 404) { sha[kind] = null; return { ok: true, raw: null }; }
     return { ok: false, status: res.status };
@@ -313,7 +318,7 @@
       const payload = kind === 'items' ? data.items : data.wishlist;
       const body = { message: `Update ${kind === 'items' ? 'library' : 'wishlist'} via Do I Have It`, content: b64Encode(JSON.stringify(payload, null, 2)) };
       if (sha[kind]) body.sha = sha[kind];
-      const res = await fetch(apiUrlFor(pathFor(kind)), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await fetch(apiUrlFor(pathFor(kind)), { method: 'PUT', headers: { ...ghHeaders(true), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (res.ok) { const d = await res.json(); sha[kind] = d.content.sha; markSynced(kind); return true; }
       if (res.status === 409 && !retry) {
         const r2 = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
@@ -324,7 +329,7 @@
   }
 
   async function fetchAll() {
-    if (!configComplete(cfg)) { setStatus('Not connected yet — fill in the details below.', null); return; }
+    if (!configComplete(cfg)) { setStatus('Library loads automatically from GitHub. Saving changes requires a GitHub token.', null); return; }
     setStatus('Connecting to GitHub…', null);
     const cacheValid = cacheState && sameRepo(cacheState.cfg, cfg);
     try {
@@ -350,7 +355,7 @@
 
       cacheState = { cfg, items: data.items, wishlist: data.wishlist, itemsPending: false, wishlistPending: false, timestamp: Date.now() };
       persistCache();
-      setStatus(`Connected — ${data.items.length} title${data.items.length===1?'':'s'}, ${data.wishlist.length} on wishlist.${resynced ? ' Offline changes synced.' : ''}${migrated ? ' Wishlist moved to its own file.' : ''}`, 'ok');
+      setStatus(`Library loaded — ${data.items.length} title${data.items.length===1?'':'s'}, ${data.wishlist.length} on wishlist.${resynced ? ' Offline changes synced.' : ''}${migrated ? ' Wishlist moved to its own file.' : ''}`, 'ok');
     } catch (e) {
       if (cacheValid) {
         data = { items: cacheState.items, wishlist: cacheState.wishlist };
@@ -490,7 +495,7 @@
       token: document.getElementById('ghToken').value.trim(),
       tmdbToken: document.getElementById('tmdbToken').value.trim()
     };
-    if (!configComplete(cfg)) { setStatus('Fill in all the fields first.', 'err'); return; }
+    if (!readConfigComplete(cfg)) { setStatus('Enter your GitHub username, repository and file paths first.', 'err'); return; }
     saveConfig(cfg);
     fetchAll();
   });
@@ -502,7 +507,7 @@
   if (cfg.wishlistPath) document.getElementById('ghWishPath').value = cfg.wishlistPath;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
   if (cfg.tmdbToken) document.getElementById('tmdbToken').value = cfg.tmdbToken;
-  if (configComplete(cfg)) fetchAll();
+  if (readConfigComplete(cfg)) fetchAll();
 
   // ---- Tabs ----
   document.querySelectorAll('nav button').forEach(btn => {
@@ -602,7 +607,7 @@
       .sort((a,b) => a.title.localeCompare(b.title));
     libCount.textContent = data.items.length;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
+      libList.innerHTML = `<div class="empty">${!ready ? 'Set up your GitHub repository in the Sync tab first.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
       return;
     }
     if (view === 'grid') {
@@ -722,7 +727,7 @@
   function renderWishlist() {
     const wishList = document.getElementById('wishList');
     const items = [...data.wishlist].sort((a,b) => a.title.localeCompare(b.title));
-    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : 'Nothing on your wishlist yet.'}</div>`; return; }
+    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Set up your GitHub repository in the Sync tab first.' : 'Nothing on your wishlist yet.'}</div>`; return; }
     wishList.innerHTML = items.map(i => `
       <div class="libitem">
         <div class="meta"><div class="title">${escapeHtml(i.title)}</div></div>
@@ -738,7 +743,7 @@
   document.getElementById('wishAddBtn').addEventListener('click', async () => {
     const title = document.getElementById('wishTitle').value.trim();
     const msg = document.getElementById('wishMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub in the Sync tab first.'; return; }
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Set up your GitHub repository in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     data.wishlist.push({ id: Date.now().toString(36), title, added: new Date().toISOString() });
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
@@ -775,7 +780,7 @@
     const format = document.getElementById('addFormat').value;
     const barcode = document.getElementById('addBarcode').value.trim();
     const msg = document.getElementById('saveMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub in the Sync tab first.'; return; }
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Set up your GitHub repository in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Fetching cover…';
     const cover = await fetchCover(title, format);
@@ -792,7 +797,7 @@
   document.getElementById('importBtn').addEventListener('click', async () => {
     const raw = document.getElementById('importText').value;
     const msg = document.getElementById('importMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub above first.'; return; }
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Set up your GitHub repository above first.'; return; }
     const incoming = extractItems(raw);
     if (incoming.jsonError) { msg.style.color = 'var(--rust)'; msg.textContent = "That looked like Jellyfin JSON but wasn't complete — copy the entire response, starting from the very first { and ending at the final }."; return; }
     const list = incoming.items;
