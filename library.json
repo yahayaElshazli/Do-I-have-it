@@ -116,7 +116,7 @@
     "title": "The Big Bang Theory",
     "format": "Unknown",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/euKFiO5M125rpngFRBbSW83beeI.jpg",
     "added": "2026-09-26T18:14:04.092Z"
   },
   {
@@ -140,7 +140,7 @@
     "title": "The Bourne Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/r74T5OOHEtpxpIHmRY3zI6wh5eW.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -428,7 +428,7 @@
     "title": "The Hannibal Lecter Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/lTtnUnKVFLX10Ui19WGiL7CqZ1y.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -636,7 +636,7 @@
     "title": "The Lord of the Rings Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/xMXBHnV7sqsLOZ8rNPLc3TGNe0O.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -716,7 +716,7 @@
     "title": "Men in Black Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/3LI7srmqMVECnijQXi9CaIRiCCS.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -804,7 +804,7 @@
     "title": "Planet of the Apes (Reboot) Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/afGkMC4HF0YtXYNkyfCgTDLFe6m.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -884,7 +884,7 @@
     "title": "Shrek Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/g1Kcbi5zSelArzR5UYkxKvG6K2a.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -932,7 +932,7 @@
     "title": "Spider-Man: Spider-Verse Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/eD4bGQNfmqExIAzKdvX5gDHhI2.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
@@ -948,7 +948,7 @@
     "title": "Star Wars Collection",
     "format": "Box set",
     "barcode": "",
-    "cover": null,
+    "cover": "https://image.tmdb.org/t/p/w500/pWVLFh4OuejTpUaDQbB1C4zoS2p.jpg",
     "added": "2026-09-26T18:14:04.093Z"
   },
   {
