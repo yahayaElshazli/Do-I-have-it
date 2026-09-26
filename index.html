@@ -155,7 +155,7 @@
   </section>
 
   <section id="tab-import" class="tab">
-    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from GitHub. Saving changes requires a GitHub token.</div>
+    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from library.json. GitHub settings are only needed when saving changes.</div>
 
     <div class="field">
       <label for="ghOwner">GitHub username</label>
@@ -183,7 +183,7 @@
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Save settings</button>
-      <button class="btn-secondary" id="resyncBtn" style="flex:1;">Sync now</button>
+      <button class="btn-secondary" id="resyncBtn" style="flex:1;">Reload library</button>
     </div>
     <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-e — TMDB-only cover lookup for movies, collections and TV. If this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Covers are sourced from TMDB. Your TMDB token is stored only on this device with the other app settings.</p>
@@ -207,7 +207,7 @@
         <li>Generate it, copy it, and paste it above. It's stored only on this device.</li>
       </ol>
     </details>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">The library is loaded automatically when the app opens. The repository must be public for token-free reading. A GitHub token is only needed when the app saves changes. Library and wishlist are saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
+    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">The library is loaded directly from library.json when the app opens, so no GitHub sync is needed just to view it. Keep library.json and wishlist.json alongside the app on GitHub Pages. A GitHub token is only needed when the app saves changes. Library and wishlist are saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
 
     <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
@@ -271,6 +271,7 @@
 
   function configComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath && c.token && c.tmdbToken); }
   function readConfigComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath); }
+  function localFileUrl(path) { return new URL(path || 'library.json', document.baseURI).href; }
   function sameRepo(c1, c2) { return c1 && c2 && c1.owner === c2.owner && c1.repo === c2.repo && c1.libraryPath === c2.libraryPath && c1.wishlistPath === c2.wishlistPath; }
   function pathFor(kind) { return kind === 'items' ? cfg.libraryPath : cfg.wishlistPath; }
   function apiUrlFor(path) { return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path)}`; }
@@ -306,9 +307,15 @@
   }
 
   async function fetchFile(kind) {
-    const res = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders(false) });
-    if (res.status === 200) { const gh = await res.json(); sha[kind] = gh.sha; return { ok: true, raw: gh.content ? JSON.parse(b64Decode(gh.content)) : null }; }
-    if (res.status === 404) { sha[kind] = null; return { ok: true, raw: null }; }
+    // Read the library directly from the same GitHub Pages site as index.html.
+    // This avoids the GitHub API and therefore avoids any sync/token step for reading.
+    const path = pathFor(kind);
+    const res = await fetch(localFileUrl(path), { cache: 'no-store' });
+    if (res.ok) {
+      try { return { ok: true, raw: await res.json() }; }
+      catch (e) { return { ok: false, status: 'invalid-json' }; }
+    }
+    if (res.status === 404) return { ok: true, raw: null };
     return { ok: false, status: res.status };
   }
 
@@ -329,8 +336,9 @@
   }
 
   async function fetchAll() {
-    if (!configComplete(cfg)) { setStatus('Library loads automatically from GitHub. Saving changes requires a GitHub token.', null); return; }
-    setStatus('Connecting to GitHub…', null);
+    if (!cfg.libraryPath) cfg.libraryPath = 'library.json';
+    if (!cfg.wishlistPath) cfg.wishlistPath = 'wishlist.json';
+    setStatus('Loading library.json…', null);
     const cacheValid = cacheState && sameRepo(cacheState.cfg, cfg);
     try {
       const libRes = await fetchFile('items');
@@ -507,7 +515,7 @@
   if (cfg.wishlistPath) document.getElementById('ghWishPath').value = cfg.wishlistPath;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
   if (cfg.tmdbToken) document.getElementById('tmdbToken').value = cfg.tmdbToken;
-  if (readConfigComplete(cfg)) fetchAll();
+  fetchAll();
 
   // ---- Tabs ----
   document.querySelectorAll('nav button').forEach(btn => {
