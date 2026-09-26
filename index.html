@@ -873,12 +873,28 @@
   function collectionMembers(collection) {
     const cid = collectionIdOf(collection);
     if (!cid) return [];
+    const seen = new Set();
     return data.items
       .filter(i => i.mediaType === 'Movie' && String(collectionIdOf(i) || '') === String(cid))
+      .filter(i => {
+        // Jellyfin can export multiple records for the same film/version.
+        // Show one movie entry inside the collection rather than duplicates.
+        const key = `${String(i.title || '').toLowerCase()}|${i.productionYear || ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .sort((a, b) => {
         const ay = Number(a.productionYear || 0), by = Number(b.productionYear || 0);
         return ay - by || a.title.localeCompare(b.title);
       });
+  }
+
+  function hasVisibleCollection(i) {
+    if (!i || i.mediaType !== 'Movie') return false;
+    const cid = collectionIdOf(i);
+    if (!cid) return false;
+    return data.items.some(c => c.mediaType === 'BoxSet' && String(collectionIdOf(c) || '') === String(cid));
   }
 
   function collectionMemberCount(collection) {
@@ -892,7 +908,8 @@
     }
     const list = members.map(m => {
       const year = m.productionYear ? ` <span style="color:var(--ink-dim);">(${escapeHtml(String(m.productionYear))})</span>` : '';
-      return `<div style="padding:4px 0;">• ${escapeHtml(m.title)}${year}</div>`;
+      const rating = m.communityRating ? ` · ★ ${Number(m.communityRating).toFixed(1)}` : '';
+      return `<div style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,.06);">• ${escapeHtml(m.title)}${year}<span style="color:var(--ink-dim);">${rating}</span></div>`;
     }).join('');
     return `<div class="detail-label">Films</div><div class="detail-value">${list}</div>`;
   }
@@ -944,16 +961,25 @@
     document.getElementById('viewGridBtn').classList.toggle('active', view === 'grid');
     document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
     const q = libFilter.value.trim().toLowerCase();
-    const items = data.items
+
+    // Collections are top-level library entries. Movies that belong to a
+    // collection represented in the library are shown inside that collection,
+    // not as duplicate top-level rows. Movies whose collection record is absent
+    // remain visible on their own.
+    const topLevelItems = data.items.filter(i => !hasVisibleCollection(i));
+
+    const items = topLevelItems
       .filter(i => activeType === 'all' || (i.mediaType || 'Movie') === activeType)
       .filter(i => i.title.toLowerCase().includes(q))
       .filter(i => activeType === 'BoxSet' || activeFormat === 'all' || (i.format || 'Unknown') === activeFormat)
       .sort((a,b) => a.title.localeCompare(b.title));
-    const movieCount = data.items.filter(i => (i.mediaType || 'Movie') === 'Movie').length;
-    const seriesCount = data.items.filter(i => i.mediaType === 'Series').length;
-    const collectionCount = data.items.filter(i => i.mediaType === 'BoxSet').length;
-    libCount.textContent = activeType === 'all' ? data.items.length : items.length;
-    document.querySelector('#typeChips [data-type="all"]').textContent = `All (${data.items.length})`;
+
+    const movieCount = topLevelItems.filter(i => (i.mediaType || 'Movie') === 'Movie').length;
+    const seriesCount = topLevelItems.filter(i => i.mediaType === 'Series').length;
+    const collectionCount = topLevelItems.filter(i => i.mediaType === 'BoxSet').length;
+
+    libCount.textContent = activeType === 'all' ? topLevelItems.length : items.length;
+    document.querySelector('#typeChips [data-type="all"]').textContent = `All (${topLevelItems.length})`;
     document.querySelector('#typeChips [data-type="Movie"]').textContent = `Movies (${movieCount})`;
     document.querySelector('#typeChips [data-type="Series"]').textContent = `Series (${seriesCount})`;
     document.querySelector('#typeChips [data-type="BoxSet"]').textContent = `Collections (${collectionCount})`;
