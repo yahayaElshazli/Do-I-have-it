@@ -383,21 +383,63 @@
     lastGitHubError = '';
     try {
       const payload = kind === 'items' ? data.items : data.wishlist;
-      const body = { message: `Update ${kind === 'items' ? 'library' : 'wishlist'} via Do I Have It`, content: b64Encode(JSON.stringify(payload, null, 2)) };
+      const url = apiUrlFor(pathFor(kind));
+
+      // GitHub requires the current file SHA when updating an existing file.
+      // The app reads library.json/wishlist.json directly from GitHub Pages, so
+      // we cannot rely on the Contents API SHA having been populated already.
+      if (!sha[kind]) {
+        const current = await fetch(url, { headers: ghHeaders() });
+        if (current.ok) {
+          const currentData = await current.json();
+          sha[kind] = currentData.sha || null;
+        } else if (current.status !== 404) {
+          await describeGitHubResponse(current);
+          markPending(kind);
+          return false;
+        }
+      }
+
+      const body = {
+        message: `Update ${kind === 'items' ? 'library' : 'wishlist'} via Do I Have It`,
+        content: b64Encode(JSON.stringify(payload, null, 2))
+      };
       if (sha[kind]) body.sha = sha[kind];
-      const res = await fetch(apiUrlFor(pathFor(kind)), { method: 'PUT', headers: { ...ghHeaders(true), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (res.ok) { const d = await res.json(); sha[kind] = d.content.sha; markSynced(kind); return true; }
-      if (res.status === 409 && !retry) {
-        const r2 = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
-        if (r2.ok) { const d2 = await r2.json(); sha[kind] = d2.sha; return pushFile(kind, true); }
+
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { ...ghHeaders(true), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        const d = await res.json();
+        sha[kind] = d.content.sha;
+        markSynced(kind);
+        return true;
+      }
+
+      if ((res.status === 409 || res.status === 422) && !retry) {
+        // Refresh the SHA and retry once if GitHub reports a stale/missing SHA.
+        const r2 = await fetch(url, { headers: ghHeaders() });
+        if (r2.ok) {
+          const d2 = await r2.json();
+          sha[kind] = d2.sha || null;
+          return pushFile(kind, true);
+        }
         await describeGitHubResponse(r2);
       } else {
         await describeGitHubResponse(res);
       }
-      markPending(kind); return false;
+
+      markPending(kind);
+      return false;
     } catch (e) {
-      lastGitHubError = e && e.message ? `Network/browser error — ${e.message}` : 'Network/browser error while contacting GitHub. Check your connection and repository settings.';
-      markPending(kind); return false;
+      lastGitHubError = e && e.message
+        ? `Network/browser error — ${e.message}`
+        : 'Network/browser error while contacting GitHub. Check your connection and repository settings.';
+      markPending(kind);
+      return false;
     }
   }
 
