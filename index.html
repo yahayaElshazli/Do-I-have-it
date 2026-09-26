@@ -866,9 +866,52 @@
     return bits.join(' · ');
   }
 
+  function collectionIdOf(i) {
+    return i && (i.collectionId || (i.providerIds && (i.providerIds.TmdbCollection || i.providerIds.Tmdbcollection)) || null);
+  }
+
+  function collectionMembers(collection) {
+    const cid = collectionIdOf(collection);
+    if (!cid) return [];
+    return data.items
+      .filter(i => i.mediaType === 'Movie' && String(collectionIdOf(i) || '') === String(cid))
+      .sort((a, b) => {
+        const ay = Number(a.productionYear || 0), by = Number(b.productionYear || 0);
+        return ay - by || a.title.localeCompare(b.title);
+      });
+  }
+
+  function collectionMemberCount(collection) {
+    return collectionMembers(collection).length;
+  }
+
+  function collectionMembersHtml(collection) {
+    const members = collectionMembers(collection);
+    if (!members.length) {
+      return `<div class="detail-label">Films</div><div class="detail-value">No linked films found in the imported Jellyfin data.</div>`;
+    }
+    const list = members.map(m => {
+      const year = m.productionYear ? ` <span style="color:var(--ink-dim);">(${escapeHtml(String(m.productionYear))})</span>` : '';
+      return `<div style="padding:4px 0;">• ${escapeHtml(m.title)}${year}</div>`;
+    }).join('');
+    return `<div class="detail-label">Films</div><div class="detail-value">${list}</div>`;
+  }
+
   function detailRows(i) {
     const rows = [];
     const add = (label, value) => { if (value !== null && value !== undefined && String(value).trim() !== '') rows.push(`<div class="detail-label">${escapeHtml(label)}</div><div class="detail-value">${escapeHtml(String(value))}</div>`); };
+
+    if (i.mediaType === 'BoxSet') {
+      add('Format', i.format || 'Box set');
+      add('Year', i.productionYear);
+      add('Premiere', i.premiereDate ? new Date(i.premiereDate).toLocaleDateString() : '');
+      add('Age rating', i.officialRating);
+      add('Added', i.added ? new Date(i.added).toLocaleDateString() : '');
+      add('Media type', 'Collection');
+      rows.push(collectionMembersHtml(i));
+      return rows.join('');
+    }
+
     add('Format', i.format);
     add('Year', i.productionYear);
     add('Premiere', i.premiereDate ? new Date(i.premiereDate).toLocaleDateString() : '');
@@ -895,11 +938,6 @@
     if (i.mediaType === 'Series') return 'Series';
     if (i.mediaType === 'BoxSet') return 'Collection';
     return 'Movie';
-  }
-
-  function collectionMemberCount(collection) {
-    if (!collection || !collection.collectionId) return 0;
-    return data.items.filter(i => i.mediaType === 'Movie' && String(i.collectionId || '') === String(collection.collectionId)).length;
   }
 
   function renderLibrary() {
