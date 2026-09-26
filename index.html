@@ -359,8 +359,27 @@
     return { ok: false, status: res.status };
   }
 
+  let lastGitHubError = '';
+
+  async function describeGitHubResponse(res) {
+    let detail = '';
+    try {
+      const text = await res.text();
+      if (text) {
+        try {
+          const json = JSON.parse(text);
+          detail = json.message || (json.error && json.error.message) || text;
+        } catch (_) { detail = text; }
+      }
+    } catch (_) {}
+    const suffix = detail ? ` — ${detail}` : '';
+    lastGitHubError = `GitHub ${res.status}${res.statusText ? ` ${res.statusText}` : ''}${suffix}`;
+    return lastGitHubError;
+  }
+
   async function pushFile(kind, retry) {
-    if (!configComplete(cfg)) return false;
+    if (!configComplete(cfg)) { lastGitHubError = 'GitHub settings are incomplete. Check Admin → GitHub settings.'; return false; }
+    lastGitHubError = '';
     try {
       const payload = kind === 'items' ? data.items : data.wishlist;
       const body = { message: `Update ${kind === 'items' ? 'library' : 'wishlist'} via Do I Have It`, content: b64Encode(JSON.stringify(payload, null, 2)) };
@@ -370,9 +389,15 @@
       if (res.status === 409 && !retry) {
         const r2 = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
         if (r2.ok) { const d2 = await r2.json(); sha[kind] = d2.sha; return pushFile(kind, true); }
+        await describeGitHubResponse(r2);
+      } else {
+        await describeGitHubResponse(res);
       }
       markPending(kind); return false;
-    } catch (e) { markPending(kind); return false; }
+    } catch (e) {
+      lastGitHubError = e && e.message ? `Network/browser error — ${e.message}` : 'Network/browser error while contacting GitHub. Check your connection and repository settings.';
+      markPending(kind); return false;
+    }
   }
 
   async function fetchAll() {
@@ -922,7 +947,7 @@
       : 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? 'Covers updated.' : 'Fetched covers, but could not save to GitHub.';
+    msg.textContent = ok ? 'Covers updated.' : `Fetched covers, but could not save to GitHub. ${lastGitHubError}`;
   });
 
   document.getElementById('clearLibBtn').addEventListener('click', async () => {
