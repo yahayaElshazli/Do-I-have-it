@@ -221,11 +221,28 @@
       <label for="tmdbToken">TMDB API Read Access Token</label>
       <input type="password" id="tmdbToken" placeholder="eyJ..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
+    <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
+      <div style="font-weight:600; margin-bottom:10px;">Jellyfin collection sync</div>
+      <div class="field">
+        <label for="jfUrl">Jellyfin server URL</label>
+        <input type="text" id="jfUrl" placeholder="http://localhost:8096" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="jfUserId">Jellyfin user ID</label>
+        <input type="text" id="jfUserId" placeholder="User ID" autocomplete="off" style="font-family:monospace; font-size:13px;">
+      </div>
+      <div class="field">
+        <label for="jfApiKey">Jellyfin API key</label>
+        <input type="password" id="jfApiKey" placeholder="API key" autocomplete="off" style="font-family:monospace; font-size:13px;">
+      </div>
+      <button class="btn-secondary" id="jfCollectionsBtn" style="width:100%;">Sync actual Jellyfin collections</button>
+      <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">This asks Jellyfin which collections each movie actually belongs to. TMDB collection IDs are not used for membership.</p>
+    </div>
     <div style="display:flex; gap:10px;">
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Save settings</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Reload library</button>
     </div>
-    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-h — Movies, series and collections support. If this does not match, your phone may still be showing an older cached copy.</p>
+    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-i — Jellyfin-authoritative collection membership. If this does not match, your phone may still be showing an older cached copy.</p>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Covers are sourced from TMDB. Your TMDB token is stored only on this device with the other app settings.</p>
 
     <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
@@ -628,7 +645,9 @@
       ...meta,
       mediaType,
       providerIds,
-      collectionId
+      collectionId,
+      jellyfinCollectionIds: Array.isArray(o && o.JellyfinCollectionIds) ? o.JellyfinCollectionIds.map(String) : (Array.isArray(o && o.jellyfinCollectionIds) ? o.jellyfinCollectionIds.map(String) : []),
+      jellyfinCollectionNames: Array.isArray(o && o.JellyfinCollectionNames) ? o.JellyfinCollectionNames.slice() : (Array.isArray(o && o.jellyfinCollectionNames) ? o.jellyfinCollectionNames.slice() : [])
     };
   }
 
@@ -659,7 +678,10 @@
       libraryPath: document.getElementById('ghPath').value.trim() || 'library.json',
       wishlistPath: document.getElementById('ghWishPath').value.trim() || 'wishlist.json',
       token: document.getElementById('ghToken').value.trim(),
-      tmdbToken: document.getElementById('tmdbToken').value.trim()
+      tmdbToken: document.getElementById('tmdbToken').value.trim(),
+      jfUrl: document.getElementById('jfUrl').value.trim(),
+      jfUserId: document.getElementById('jfUserId').value.trim(),
+      jfApiKey: document.getElementById('jfApiKey').value.trim()
     };
     if (!readConfigComplete(cfg)) { setStatus('Enter your GitHub username, repository and file paths first.', 'err'); return; }
     saveConfig(cfg);
@@ -673,6 +695,9 @@
   if (cfg.wishlistPath) document.getElementById('ghWishPath').value = cfg.wishlistPath;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
   if (cfg.tmdbToken) document.getElementById('tmdbToken').value = cfg.tmdbToken;
+  if (cfg.jfUrl) document.getElementById('jfUrl').value = cfg.jfUrl;
+  if (cfg.jfUserId) document.getElementById('jfUserId').value = cfg.jfUserId;
+  if (cfg.jfApiKey) document.getElementById('jfApiKey').value = cfg.jfApiKey;
   fetchAll();
 
   // ---- Hamburger / Admin ----
@@ -866,19 +891,17 @@
     return bits.join(' · ');
   }
 
-  function collectionIdOf(i) {
-    return i && (i.collectionId || (i.providerIds && (i.providerIds.TmdbCollection || i.providerIds.Tmdbcollection)) || null);
+  function jellyfinCollectionIdsOf(i) {
+    return Array.isArray(i && i.jellyfinCollectionIds) ? i.jellyfinCollectionIds.map(String) : [];
   }
 
   function collectionMembers(collection) {
-    const cid = collectionIdOf(collection);
+    const cid = collection && collection.jellyfinId ? String(collection.jellyfinId) : '';
     if (!cid) return [];
     const seen = new Set();
     return data.items
-      .filter(i => i.mediaType === 'Movie' && String(collectionIdOf(i) || '') === String(cid))
+      .filter(i => i.mediaType === 'Movie' && jellyfinCollectionIdsOf(i).includes(cid))
       .filter(i => {
-        // Jellyfin can export multiple records for the same film/version.
-        // Show one movie entry inside the collection rather than duplicates.
         const key = `${String(i.title || '').toLowerCase()}|${i.productionYear || ''}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -892,9 +915,9 @@
 
   function hasVisibleCollection(i) {
     if (!i || i.mediaType !== 'Movie') return false;
-    const cid = collectionIdOf(i);
-    if (!cid) return false;
-    return data.items.some(c => c.mediaType === 'BoxSet' && String(collectionIdOf(c) || '') === String(cid));
+    const ids = jellyfinCollectionIdsOf(i);
+    if (!ids.length) return false;
+    return data.items.some(c => c.mediaType === 'BoxSet' && c.jellyfinId && ids.includes(String(c.jellyfinId)));
   }
 
   function collectionMemberCount(collection) {
@@ -948,6 +971,7 @@
     add('Barcode', i.barcode);
     add('Media type', i.mediaType);
     add('Status', i.status);
+    if (i.jellyfinCollectionNames && i.jellyfinCollectionNames.length) add('Jellyfin collections', i.jellyfinCollectionNames.join(', '));
     return rows.join('');
   }
 
@@ -1189,7 +1213,7 @@
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Fetching cover…';
     const cover = await fetchCover(title, format);
-    data.items.push({ id: Date.now().toString(36), title, format, barcode, cover, added: new Date().toISOString(), productionYear: null, premiereDate: null, officialRating: null, communityRating: null, criticRating: null, runtimeMinutes: null, container: null, fileSize: null, videoLabel: null, videoWidth: null, videoHeight: null, videoCodec: null, audioLabel: null, audioCodec: null, hasSubtitles: false, played: false, playCount: 0, lastPlayed: null, mediaType: 'Movie', status: null, unplayedCount: null, providerIds: {}, collectionId: null, jellyfinId: null });
+    data.items.push({ id: Date.now().toString(36), title, format, barcode, cover, added: new Date().toISOString(), productionYear: null, premiereDate: null, officialRating: null, communityRating: null, criticRating: null, runtimeMinutes: null, container: null, fileSize: null, videoLabel: null, videoWidth: null, videoHeight: null, videoCodec: null, audioLabel: null, audioCodec: null, hasSubtitles: false, played: false, playCount: 0, lastPlayed: null, mediaType: 'Movie', status: null, unplayedCount: null, providerIds: {}, collectionId: null, jellyfinId: null, jellyfinCollectionIds: [], jellyfinCollectionNames: [] });
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
@@ -1197,6 +1221,70 @@
     if (ok) { addTitle.value = ''; document.getElementById('addBarcode').value = ''; dupWarn.style.display = 'none'; }
     renderLibrary();
   });
+
+  async function syncJellyfinCollections() {
+    const msg = document.getElementById('importMsg');
+    const jfUrl = document.getElementById('jfUrl').value.trim().replace(/\/$/, '');
+    const jfUserId = document.getElementById('jfUserId').value.trim();
+    const jfApiKey = document.getElementById('jfApiKey').value.trim();
+    if (!jfUrl || !jfApiKey) {
+      msg.style.color = 'var(--rust)';
+      msg.textContent = 'Enter your Jellyfin server URL and API key first.';
+      return;
+    }
+    cfg.jfUrl = jfUrl; cfg.jfUserId = jfUserId; cfg.jfApiKey = jfApiKey;
+    saveConfig(cfg);
+
+    const movies = data.items.filter(i => i.mediaType === 'Movie' && i.jellyfinId);
+    if (!movies.length) {
+      msg.style.color = 'var(--rust)';
+      msg.textContent = 'No Jellyfin movie IDs are stored yet. Import your Jellyfin JSON first.';
+      return;
+    }
+    const headers = { Accept: 'application/json' };
+    let synced = 0, failed = 0;
+    const collectionNames = new Map();
+    msg.style.color = 'var(--ink-dim)';
+
+    for (let n = 0; n < movies.length; n++) {
+      const movie = movies[n];
+      msg.textContent = `Reading Jellyfin collections… (${n + 1}/${movies.length})`;
+      try {
+        const params = new URLSearchParams({ api_key: jfApiKey });
+        if (jfUserId) params.set('userId', jfUserId);
+        params.set('fields', 'ProviderIds');
+        const res = await fetch(`${jfUrl}/Items/${encodeURIComponent(movie.jellyfinId)}/Collections?${params}`, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json();
+        const collections = Array.isArray(d.Items) ? d.Items : [];
+        movie.jellyfinCollectionIds = collections.map(c => String(c.Id)).filter(Boolean);
+        movie.jellyfinCollectionNames = collections.map(c => c.Name).filter(Boolean);
+        collections.forEach(c => { if (c.Id) collectionNames.set(String(c.Id), c.Name || 'Collection'); });
+        synced++;
+      } catch (e) {
+        failed++;
+      }
+    }
+
+    // Only actual Jellyfin BoxSet IDs are valid parents. Clear stale inferred membership.
+    const boxSetIds = new Set(data.items.filter(i => i.mediaType === 'BoxSet' && i.jellyfinId).map(i => String(i.jellyfinId)));
+    data.items.forEach(i => {
+      if (i.mediaType !== 'Movie') return;
+      const ids = jellyfinCollectionIdsOf(i).filter(id => boxSetIds.has(id));
+      i.jellyfinCollectionIds = ids;
+      i.jellyfinCollectionNames = ids.map(id => collectionNames.get(id)).filter(Boolean);
+    });
+
+    msg.textContent = 'Saving collection membership…';
+    const ok = await pushFile('items');
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok
+      ? `Jellyfin collection sync complete: ${synced} movies checked${failed ? `, ${failed} failed` : ''}.`
+      : (lastGitHubError || 'Collection data was updated locally but could not be saved to GitHub.');
+    renderLibrary();
+  }
+
+  document.getElementById('jfCollectionsBtn').addEventListener('click', syncJellyfinCollections);
 
   // ---- Import tab ----
   document.getElementById('importBtn').addEventListener('click', async () => {
