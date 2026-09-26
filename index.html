@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reel Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1c1b1a;
+    --panel: #26241f;
+    --ink: #ede8de;
+    --ink-dim: #a89e8c;
+    --amber: #d4a24c;
+    --teal: #4f8f83;
+    --rust: #b5563c;
+    --line: #3a372f;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f2ede2;
+      --panel: #ffffff;
+      --ink: #201e1a;
+      --ink-dim: #6b6355;
+      --line: #ded5c2;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1b1a; --panel: #26241f; --ink: #ede8de; --ink-dim: #a89e8c; --line: #3a372f;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    display: flex; flex-direction: column; max-width: 480px; margin-inline: auto;
+  }
+  header {
+    padding: 20px 20px 14px; border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; margin: 0;
+    letter-spacing: 0.2px;
+  }
+  header p { margin: 4px 0 0; color: var(--ink-dim); font-size: 13px; }
+  main { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--ink-dim); margin-bottom: 6px; }
+  input[type=text], select {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); font-size: 16px; font-family: inherit;
+  }
+  input[type=text]:focus, select:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+    border: none; border-radius: 10px; padding: 13px 16px;
+  }
+  .btn-primary { background: var(--amber); color: #201a0d; width: 100%; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); width: 100%; }
+  .btn-primary:active, .btn-secondary:active { opacity: 0.8; }
+  .result {
+    margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 15px; line-height: 1.4;
+  }
+  .result.own { background: rgba(79,143,131,0.18); border: 1px solid var(--teal); }
+  .result.missing { background: rgba(181,86,60,0.15); border: 1px solid var(--rust); }
+  .result strong { display: block; font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 2px; }
+  #scanBox {
+    margin-top: 14px; border-radius: 12px; overflow: hidden; position: relative;
+    background: #000; display: none; aspect-ratio: 4/3;
+  }
+  #scanBox video { width: 100%; height: 100%; object-fit: cover; }
+  #scanBox .scanline {
+    position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+  }
+  .libitem {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--line); gap: 10px;
+  }
+  .libitem .meta { min-width: 0; }
+  .libitem .title { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .libitem .sub { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
+  .libitem button { background: none; color: var(--ink-dim); padding: 6px; font-size: 13px; flex-shrink: 0; }
+  .empty { color: var(--ink-dim); font-size: 14px; padding: 30px 0; text-align: center; }
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; display: flex;
+    background: var(--panel); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    max-width: 480px; margin-inline: auto;
+  }
+  nav button {
+    flex: 1; background: none; color: var(--ink-dim); border-radius: 0;
+    padding: 14px 0 10px; font-size: 13px; border-top: 2px solid transparent;
+  }
+  nav button.active { color: var(--amber); border-top: 2px solid var(--amber); }
+  .tab { display: none; }
+  .tab.active { display: block; }
+  .count-pill {
+    display: inline-block; background: var(--line); color: var(--ink-dim);
+    font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Reel Check</h1>
+  <p>Your disc collection, always in your pocket</p>
+</header>
+
+<main>
+
+  <section id="tab-check" class="tab active">
+    <div class="field">
+      <label for="checkInput">Search by title</label>
+      <input type="text" id="checkInput" placeholder="e.g. Paddington 2" autocomplete="off">
+    </div>
+    <div id="checkResults"></div>
+    <button class="btn-secondary" id="scanBtn" style="margin-top:6px;">📷 Scan a barcode instead</button>
+    <div id="scanBox"><video id="video" playsinline muted></video><div class="scanline"></div></div>
+    <div id="scanResult"></div>
+  </section>
+
+  <section id="tab-library" class="tab">
+    <div class="field">
+      <label for="libFilter">Filter your library<span class="count-pill" id="libCount">0</span></label>
+      <input type="text" id="libFilter" placeholder="Filter..." autocomplete="off">
+    </div>
+    <div id="libList"></div>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn-secondary" id="exportBtn" style="flex:1;">⬇ Export backup</button>
+      <button class="btn-secondary" id="restoreBtn" style="flex:1;">⬆ Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json" style="display:none;">
+    <p id="backupMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
+  </section>
+
+  <section id="tab-add" class="tab">
+    <div class="field">
+      <label for="addTitle">Title</label>
+      <input type="text" id="addTitle" placeholder="Film or show title" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="addFormat">Format</label>
+      <select id="addFormat">
+        <option>DVD</option>
+        <option>Blu-ray</option>
+        <option>4K UHD</option>
+        <option>Box set</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="addBarcode">Barcode (optional, lets you scan next time)</label>
+      <input type="text" id="addBarcode" placeholder="Scan or type UPC/EAN" autocomplete="off">
+    </div>
+    <button class="btn-secondary" id="addScanBtn" style="margin-bottom:12px;">📷 Scan barcode</button>
+    <div id="addScanBox"><div id="addScanHost"></div></div>
+    <button class="btn-primary" id="saveBtn">Add to library</button>
+    <p id="saveMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
+  </section>
+
+  <section id="tab-import" class="tab">
+    <div class="field">
+      <label for="importText">Paste titles, or paste JSON from Jellyfin</label>
+      <textarea id="importText" rows="8" placeholder="One title per line, e.g.&#10;Paddington 2&#10;The Grand Budapest Hotel&#10;&#10;...or paste a whole Jellyfin API response and it'll pull the titles out automatically." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:15px; font-family:inherit; resize:vertical;"></textarea>
+    </div>
+    <button class="btn-primary" id="importBtn">Import titles</button>
+    <p id="importMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
+
+    <details style="margin-top:22px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
+      <summary style="cursor:pointer; color:var(--ink);">How to get a title list out of Jellyfin</summary>
+      <p style="margin-top:10px;">Fastest way (no plugin needed):</p>
+      <ol style="padding-left:18px;">
+        <li>In Jellyfin, open <em>Dashboard → API Keys</em> and create a key.</li>
+        <li>Find your user ID: <em>Dashboard → Users</em>, click your user — it's in the page URL.</li>
+        <li>Visit this in your browser (fill in your server, key, and user ID):<br>
+        <code style="word-break:break-all; font-size:11px;">http://SERVER:8096/Users/USER_ID/Items?api_key=API_KEY&Recursive=true&IncludeItemTypes=Movie,Series&SortBy=SortName</code></li>
+        <li>Select all the JSON text that appears, copy it, and paste it into the box above.</li>
+      </ol>
+      <p>Or simpler: just type/paste a plain list of titles, one per line.</p>
+    </details>
+  </section>
+
+</main>
+
+<nav>
+  <button data-tab="check" class="active">Check</button>
+  <button data-tab="library">Library</button>
+  <button data-tab="add">Add</button>
+  <button data-tab="import">Import</button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.2/dist/quagga.min.js"></script>
+<script>
+(function() {
+  const STORE_KEY = 'reelcheck-library';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function save(items) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+    catch (e) { console.error('Storage error', e); }
+  }
+  let library = load();
+
+  // Tabs
+  document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      stopScan();
+      if (btn.dataset.tab === 'library') renderLibrary();
+    });
+  });
+
+  // ---- Check tab ----
+  const checkInput = document.getElementById('checkInput');
+  const checkResults = document.getElementById('checkResults');
+  checkInput.addEventListener('input', () => {
+    const q = checkInput.value.trim().toLowerCase();
+    if (!q) { checkResults.innerHTML = ''; return; }
+    const matches = library.filter(i => i.title.toLowerCase().includes(q));
+    if (matches.length) {
+      checkResults.innerHTML = matches.map(m =>
+        `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(m.title)} — ${m.format}</div>`
+      ).join('');
+    } else {
+      checkResults.innerHTML = `<div class="result missing"><strong>Not in your library</strong>No match for "${escapeHtml(checkInput.value.trim())}" — safe to buy!</div>`;
+    }
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---- Barcode scanning (Check tab) ----
+  let scanning = false;
+  const scanBox = document.getElementById('scanBox');
+  const scanResult = document.getElementById('scanResult');
+  document.getElementById('scanBtn').addEventListener('click', () => {
+    if (scanning) { stopScan(); return; }
+    startScan(document.getElementById('video'), scanBox, code => {
+      const match = library.find(i => i.barcode === code);
+      if (match) {
+        scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${match.format}</div>`;
+      } else {
+        scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(code)} — safe to buy, or add it in the Add tab.</div>`;
+      }
+    });
+  });
+
+  function startScan(videoEl, boxEl, onCode) {
+    boxEl.style.display = 'block';
+    scanning = true;
+    document.getElementById('scanBtn').textContent = '✕ Stop scanning';
+    Quagga.init({
+      inputStream: { type: 'LiveStream', target: videoEl, constraints: { facingMode: 'environment' } },
+      decoder: { readers: ['ean_reader', 'upc_reader', 'ean_8_reader'] },
+      locate: true
+    }, err => {
+      if (err) { scanResult.innerHTML = `<div class="result missing"><strong>Camera unavailable</strong>${err.message || 'Check camera permission.'}</div>`; stopScan(); return; }
+      Quagga.start();
+    });
+    Quagga.offDetected();
+    Quagga.onDetected(data => {
+      const code = data.codeResult.code;
+      onCode(code);
+      stopScan();
+    });
+  }
+  function stopScan() {
+    if (!scanning) return;
+    scanning = false;
+    try { Quagga.stop(); } catch (e) {}
+    document.getElementById('scanBtn').textContent = '📷 Scan a barcode instead';
+    scanBox.style.display = 'none';
+  }
+
+  // ---- Library tab ----
+  const libList = document.getElementById('libList');
+  const libFilter = document.getElementById('libFilter');
+  const libCount = document.getElementById('libCount');
+  function renderLibrary() {
+    const q = libFilter.value.trim().toLowerCase();
+    const items = library.filter(i => i.title.toLowerCase().includes(q))
+      .sort((a,b) => a.title.localeCompare(b.title));
+    libCount.textContent = library.length;
+    if (!items.length) {
+      libList.innerHTML = `<div class="empty">${library.length ? 'No matches.' : 'Nothing added yet — use the Add tab.'}</div>`;
+      return;
+    }
+    libList.innerHTML = items.map(i => `
+      <div class="libitem">
+        <div class="meta">
+          <div class="title">${escapeHtml(i.title)}</div>
+          <div class="sub">${i.format}${i.barcode ? ' · ' + escapeHtml(i.barcode) : ''}</div>
+        </div>
+        <button data-id="${i.id}" class="del">Remove</button>
+      </div>`).join('');
+    libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', () => {
+      library = library.filter(i => i.id !== b.dataset.id);
+      save(library);
+      renderLibrary();
+    }));
+  }
+  libFilter.addEventListener('input', renderLibrary);
+
+  // ---- Backup export / restore ----
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(library, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'reelcheck-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('restoreBtn').addEventListener('click', () => {
+    document.getElementById('restoreFile').click();
+  });
+  document.getElementById('restoreFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const msg = document.getElementById('backupMsg');
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const items = JSON.parse(reader.result);
+        if (!Array.isArray(items)) throw new Error('not an array');
+        const existing = new Set(library.map(i => i.title.toLowerCase()));
+        let added = 0;
+        items.forEach(i => {
+          if (i && i.title && !existing.has(i.title.toLowerCase())) {
+            library.push({ id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', added: i.added || new Date().toISOString() });
+            existing.add(i.title.toLowerCase());
+            added++;
+          }
+        });
+        save(library);
+        renderLibrary();
+        msg.style.color = 'var(--teal)';
+        msg.textContent = `Restored ${added} title${added === 1 ? '' : 's'} from backup.`;
+      } catch (err) {
+        msg.style.color = 'var(--rust)';
+        msg.textContent = 'That file didn\'t look like a valid backup.';
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ---- Add tab ----
+  document.getElementById('addScanBtn').addEventListener('click', () => {
+    const host = document.getElementById('addScanHost');
+    if (scanning) { stopScan(); host.innerHTML=''; return; }
+    host.innerHTML = '<div id="scanBoxAdd" style="margin-top:14px;border-radius:12px;overflow:hidden;position:relative;background:#000;aspect-ratio:4/3;"><video id="videoAdd" playsinline muted style="width:100%;height:100%;object-fit:cover;"></video></div>';
+    startScan(document.getElementById('videoAdd'), document.getElementById('scanBoxAdd'), code => {
+      document.getElementById('addBarcode').value = code;
+      host.innerHTML = '';
+    });
+  });
+
+  // ---- Import tab ----
+  function extractTitles(raw) {
+    raw = raw.trim();
+    if (!raw) return [];
+    // Try JSON first (Jellyfin API shapes: {Items:[{Name:...}]} or a bare array of {Name:...})
+    try {
+      const parsed = JSON.parse(raw);
+      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
+      if (arr) {
+        return arr.map(o => (o && (o.Name || o.name || o.title)) || '').filter(Boolean);
+      }
+    } catch (e) { /* not JSON, fall through */ }
+    // Plain text: one title per line (also tolerate commas)
+    return raw.split(/\r?\n/).flatMap(line => line.split(',')).map(s => s.trim()).filter(Boolean);
+  }
+
+  document.getElementById('importBtn').addEventListener('click', () => {
+    const raw = document.getElementById('importText').value;
+    const msg = document.getElementById('importMsg');
+    const titles = extractTitles(raw);
+    if (!titles.length) {
+      msg.style.color = 'var(--rust)';
+      msg.textContent = 'Could not find any titles in that text.';
+      return;
+    }
+    const existing = new Set(library.map(i => i.title.toLowerCase()));
+    let added = 0;
+    titles.forEach(t => {
+      const key = t.toLowerCase();
+      if (!existing.has(key)) {
+        library.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t, format: 'Unknown', barcode: '', added: new Date().toISOString() });
+        existing.add(key);
+        added++;
+      }
+    });
+    save(library);
+    msg.style.color = 'var(--teal)';
+    msg.textContent = `Added ${added} new title${added === 1 ? '' : 's'} (${titles.length - added} already in your library).`;
+    document.getElementById('importText').value = '';
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const title = document.getElementById('addTitle').value.trim();
+    const format = document.getElementById('addFormat').value;
+    const barcode = document.getElementById('addBarcode').value.trim();
+    const msg = document.getElementById('saveMsg');
+    if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
+    library.push({ id: Date.now().toString(36), title, format, barcode, added: new Date().toISOString() });
+    save(library);
+    msg.style.color = 'var(--teal)';
+    msg.textContent = `Added "${title}" to your library.`;
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addBarcode').value = '';
+  });
+})();
+</script>
+</body>
+</html>
