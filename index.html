@@ -21,17 +21,7 @@
   html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
   * { box-sizing: border-box; }
   body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; max-width: 480px; margin-inline: auto; }
-  header { padding: 20px 20px 14px; border-bottom: 1px solid var(--line); position: relative; }
-  .header-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-  .menu-btn { width:42px; height:42px; padding:0; border:1px solid var(--line); background:var(--panel); color:var(--ink); border-radius:12px; font-size:22px; line-height:1; flex:0 0 auto; }
-  .drawer-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.28); z-index:30; display:none; }
-  .drawer-backdrop.open { display:block; }
-  .drawer { position:fixed; top:0; right:0; bottom:0; width:min(320px,88vw); background:var(--panel); border-left:1px solid var(--line); z-index:31; transform:translateX(100%); transition:transform .2s ease; padding:calc(18px + env(safe-area-inset-top,0px)) 18px 24px; box-shadow:-12px 0 30px rgba(0,0,0,.18); }
-  .drawer.open { transform:translateX(0); }
-  .drawer h2 { font-family:'Fraunces',serif; font-size:24px; margin:0 0 6px; }
-  .drawer p { color:var(--ink-dim); font-size:13px; margin:0 0 18px; }
-  .drawer button { width:100%; text-align:left; background:transparent; color:var(--ink); border:1px solid var(--line); margin-bottom:10px; }
-  .drawer button.active { color:var(--amber); border-color:var(--amber); }
+  header { padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
   header h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; margin: 0; }
   header p { margin: 4px 0 0; color: var(--ink-dim); font-size: 13px; }
   main { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
@@ -55,20 +45,13 @@
   #scanBox { margin-top: 14px; border-radius: 12px; overflow: hidden; position: relative; background: #000; display: none; aspect-ratio: 4/3; }
   #scanBox video { width: 100%; height: 100%; object-fit: cover; }
   #scanBox .scanline { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-  .libitem { border-bottom: 1px solid var(--line); }
-  .libitem-main { display: flex; align-items: center; padding: 12px 0; gap: 10px; cursor: pointer; }
+  .libitem { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); gap: 10px; }
   .libitem .thumb { width: 36px; height: 52px; border-radius: 5px; object-fit: cover; background: var(--panel); flex-shrink: 0; }
   .libitem .thumb-ph { display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; color: var(--ink-dim); font-size: 15px; }
   .libitem .meta { min-width: 0; flex: 1; }
   .libitem .title { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .libitem .sub { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
-  .libitem .expand { background: none; color: var(--ink-dim); padding: 6px; font-size: 15px; flex-shrink: 0; }
-  .libitem .del { background: none; color: var(--ink-dim); padding: 6px; font-size: 13px; flex-shrink: 0; }
-  .libitem-details { display: none; padding: 0 0 14px 46px; }
-  .libitem.open .libitem-details { display: block; }
-  .detail-grid { display: grid; grid-template-columns: minmax(105px, 0.8fr) minmax(150px, 1.5fr); gap: 7px 12px; padding: 11px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; }
-  .detail-label { color: var(--ink-dim); }
-  .detail-value { overflow-wrap: anywhere; }
+  .libitem button { background: none; color: var(--ink-dim); padding: 6px; font-size: 13px; flex-shrink: 0; }
   .empty { color: var(--ink-dim); font-size: 14px; padding: 30px 0; text-align: center; }
   .libgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px,1fr)); gap: 14px 12px; }
   .gridcard { position: relative; }
@@ -86,28 +69,15 @@
   nav button.active { color: var(--amber); border-top: 2px solid var(--amber); }
   .tab { display: none; }
   .tab.active { display: block; }
-  .admin-section { padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--panel); margin-bottom:14px; }
-  .admin-section h2 { font-family:'Fraunces',serif; font-size:21px; margin:0 0 5px; }
-  .admin-section > p { color:var(--ink-dim); font-size:12px; line-height:1.5; margin:0 0 14px; }
-  .admin-actions { display:flex; gap:10px; flex-wrap:wrap; }
-  .admin-actions > * { flex:1 1 140px; }
   .count-pill { display: inline-block; background: var(--line); color: var(--ink-dim); font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-row">
-    <div><h1>Do I Have It</h1><p>Your disc collection, always in your pocket</p></div>
-    <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
-  </div>
+  <h1>Do I Have It</h1>
+  <p>Your disc collection, always in your pocket</p>
 </header>
-<div class="drawer-backdrop" id="drawerBackdrop"></div>
-<aside class="drawer" id="drawer" aria-label="App menu">
-  <h2>Menu</h2>
-  <p>Occasional settings and maintenance.</p>
-  <button id="adminMenuBtn">⚙ Admin</button>
-</aside>
 
 <main>
 
@@ -140,7 +110,16 @@
       <button class="chip" data-fmt="Unknown">Unknown</button>
     </div>
     <div id="libList"></div>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:18px; text-align:center;">Library maintenance is in <strong>Admin</strong>.</p>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn-secondary" id="fetchCoversBtn" style="flex:1;">🖼 Fetch missing covers</button>
+      <button class="btn-secondary" id="clearLibBtn" style="flex:1;">🗑 Clear library</button>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn-secondary" id="exportBtn" style="flex:1;">⬇ Export backup</button>
+      <button class="btn-secondary" id="restoreBtn" style="flex:1;">⬆ Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json" style="display:none;">
+    <p id="backupMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
   </section>
 
   <section id="tab-wishlist" class="tab">
@@ -175,21 +154,8 @@
     <p id="saveMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
   </section>
 
-  <section id="tab-admin" class="tab">
-    <div class="admin-section">
-      <h2>Library maintenance</h2>
-      <p>These are the jobs you only need occasionally.</p>
-      <div class="admin-actions">
-        <button class="btn-secondary" id="fetchCoversBtn">🖼 Fetch missing covers</button>
-        <button class="btn-secondary" id="clearLibBtn">🗑 Clear library</button>
-        <button class="btn-secondary" id="exportBtn">⬇ Export backup</button>
-        <button class="btn-secondary" id="restoreBtn">⬆ Restore backup</button>
-      </div>
-      <input type="file" id="restoreFile" accept="application/json" style="display:none;">
-      <p id="backupMsg" style="color:var(--teal); font-size:13px; margin-top:10px; margin-bottom:0;"></p>
-    </div>
-
-    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from library.json. These settings are only needed for saving changes and TMDB cover lookups.</div>
+  <section id="tab-import" class="tab">
+    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from library.json. GitHub settings are only needed when saving changes.</div>
 
     <div class="field">
       <label for="ghOwner">GitHub username</label>
@@ -219,7 +185,7 @@
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Save settings</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Reload library</button>
     </div>
-    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-g — Expandable library metadata and cleaner list view. If this does not match, your phone may still be showing an older cached copy.</p>
+    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-e — TMDB-only cover lookup for movies, collections and TV. If this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Covers are sourced from TMDB. Your TMDB token is stored only on this device with the other app settings.</p>
 
     <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
@@ -250,7 +216,7 @@
       <label for="importText">Paste titles, or paste JSON from Jellyfin</label>
       <textarea id="importText" rows="8" placeholder="One title per line, e.g.&#10;Paddington 2&#10;The Grand Budapest Hotel&#10;&#10;...or paste a whole Jellyfin API response and it'll pull titles + guess format + fetch covers automatically." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:15px; font-family:inherit; resize:vertical;"></textarea>
     </div>
-    <button class="btn-primary" id="importBtn">Import / update from Jellyfin</button>
+    <button class="btn-primary" id="importBtn">Import titles</button>
     <p id="importMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
 
     <details style="margin-top:22px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
@@ -274,6 +240,7 @@
   <button data-tab="library">Library</button>
   <button data-tab="wishlist">Wishlist</button>
   <button data-tab="add">Add</button>
+  <button data-tab="import">Sync</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.2/dist/quagga.min.js"></script>
@@ -418,7 +385,7 @@
   async function fetchCover(title, format) {
     lastCoverError = '';
     if (!cfg.tmdbToken) {
-      lastCoverError = 'No TMDB token is saved. Enter it in Admin and save settings.';
+      lastCoverError = 'No TMDB token is saved. Enter it in Sync and press Connect.';
       return null;
     }
 
@@ -507,38 +474,6 @@
     return null;
   }
 
-  function extractJellyfinMeta(o) {
-    const src = o && o.MediaSources && o.MediaSources[0] ? o.MediaSources[0] : null;
-    const streams = src && Array.isArray(src.MediaStreams) ? src.MediaStreams : [];
-    const video = streams.find(x => x && x.Type === 'Video') || null;
-    const audio = streams.find(x => x && x.Type === 'Audio') || null;
-    const user = o && o.UserData ? o.UserData : {};
-    const runtimeTicks = o && o.RunTimeTicks || (src && src.RunTimeTicks) || 0;
-    return {
-      productionYear: o && o.ProductionYear || null,
-      premiereDate: o && o.PremiereDate || null,
-      officialRating: o && o.OfficialRating || null,
-      communityRating: o && o.CommunityRating || null,
-      criticRating: o && o.CriticRating || null,
-      runtimeMinutes: runtimeTicks ? Math.round(runtimeTicks / 600000000) : null,
-      container: o && o.Container || (src && src.Container) || null,
-      fileSize: src && src.Size || null,
-      videoLabel: video && (video.DisplayTitle || `${video.Height || ''}p ${video.Codec || ''}`.trim()) || null,
-      videoWidth: video && video.Width || null,
-      videoHeight: video && video.Height || null,
-      videoCodec: video && video.Codec || null,
-      audioLabel: audio && audio.DisplayTitle || null,
-      audioCodec: audio && audio.Codec || null,
-      hasSubtitles: !!(o && o.HasSubtitles),
-      played: !!user.Played,
-      playCount: Number(user.PlayCount || 0),
-      lastPlayed: user.LastPlayedDate || null,
-      mediaType: o && o.Type || null,
-      status: o && o.Status || null,
-      unplayedCount: user.UnplayedItemCount != null ? Number(user.UnplayedItemCount) : null
-    };
-  }
-
   function extractItems(raw) {
     raw = raw.trim();
     if (!raw) return { items: [], jsonError: false };
@@ -546,7 +481,7 @@
       const parsed = tryParseJson(raw);
       if (parsed) {
         const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
-        if (arr) return { items: arr.map(o => ({ title: (o && (o.Name || o.name || o.title)) || '', format: guessFormat(o || {}), ...extractJellyfinMeta(o || {}) })).filter(x => x.title), jsonError: false };
+        if (arr) return { items: arr.map(o => ({ title: (o && (o.Name || o.name || o.title)) || '', format: guessFormat(o || {}) })).filter(x => x.title), jsonError: false };
       }
       return { items: [], jsonError: true };
     }
@@ -582,29 +517,6 @@
   if (cfg.tmdbToken) document.getElementById('tmdbToken').value = cfg.tmdbToken;
   fetchAll();
 
-  // ---- Hamburger / Admin ----
-  const menuBtn = document.getElementById('menuBtn');
-  const drawer = document.getElementById('drawer');
-  const drawerBackdrop = document.getElementById('drawerBackdrop');
-  const adminMenuBtn = document.getElementById('adminMenuBtn');
-  function closeMenu() {
-    drawer.classList.remove('open'); drawerBackdrop.classList.remove('open'); menuBtn.setAttribute('aria-expanded','false');
-  }
-  function openAdmin() {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-admin').classList.add('active');
-    adminMenuBtn.classList.add('active');
-    closeMenu();
-    stopScan();
-  }
-  menuBtn.addEventListener('click', () => {
-    const open = !drawer.classList.contains('open');
-    drawer.classList.toggle('open', open); drawerBackdrop.classList.toggle('open', open); menuBtn.setAttribute('aria-expanded', String(open));
-  });
-  drawerBackdrop.addEventListener('click', closeMenu);
-  adminMenuBtn.addEventListener('click', openAdmin);
-
   // ---- Tabs ----
   document.querySelectorAll('nav button').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -612,8 +524,6 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      adminMenuBtn.classList.remove('active');
-      closeMenu();
       stopScan();
       if (btn.dataset.tab === 'library') renderLibrary();
       if (btn.dataset.tab === 'wishlist') renderWishlist();
@@ -642,89 +552,37 @@
 
   // ---- Barcode scanning ----
   let scanning = false;
-  let scannerTarget = null;
-  let scannerButton = null;
-  let scannerBox = null;
-  let scannerOnCode = null;
   const scanBox = document.getElementById('scanBox');
   const scanResult = document.getElementById('scanResult');
-
-  async function lookupBarcode(code) {
-    const clean = String(code || '').replace(/\D/g, '');
-    if (!clean) return null;
-    try {
-      const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(clean)}`, {
-        headers: { Accept: 'application/json' }, cache: 'no-store'
-      });
-      if (!res.ok) return null;
-      const d = await res.json();
-      const item = d && Array.isArray(d.items) ? d.items[0] : null;
-      if (!item || !item.title) return null;
-      return { title: item.title, ean: item.ean || clean, upc: item.upc || '', gtin: item.gtin || '', description: item.description || '' };
-    } catch (e) { return null; }
-  }
-
-  async function handleCheckBarcode(code) {
-    const clean = String(code || '').replace(/\D/g, '');
-    const match = data.items.find(i => String(i.barcode || '').replace(/\D/g, '') === clean);
-    if (match) {
-      scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${escapeHtml(match.format || 'Unknown')}</div>`;
-      return;
-    }
-    scanResult.innerHTML = `<div class="result" style="background:var(--panel);border:1px solid var(--line);"><strong>Looking up barcode…</strong>${escapeHtml(clean)}</div>`;
-    const product = await lookupBarcode(clean);
-    if (product) {
-      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">Barcode ${escapeHtml(clean)} — safe to buy, or add it in the Add tab.</div></div>`;
-    } else {
-      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(clean)} — no title was found in the barcode database. You can add it in the Add tab.</div>`;
-    }
-  }
-
   document.getElementById('scanBtn').addEventListener('click', () => {
     if (scanning) { stopScan(); return; }
-    startScan(document.getElementById('video'), scanBox, document.getElementById('scanBtn'), code => handleCheckBarcode(code));
+    startScan(document.getElementById('video'), scanBox, code => {
+      const match = data.items.find(i => i.barcode === code);
+      scanResult.innerHTML = match
+        ? `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${match.format}</div>`
+        : `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(code)} — safe to buy, or add it in the Add tab.</div>`;
+    });
   });
-
-  function startScan(videoEl, boxEl, buttonEl, onCode) {
-    if (scanning) stopScan();
-    scannerTarget = videoEl; scannerButton = buttonEl; scannerBox = boxEl; scannerOnCode = onCode;
-    scanning = true;
+  function startScan(videoEl, boxEl, onCode) {
     boxEl.style.display = 'block';
-    buttonEl.textContent = '✕ Stop scanning';
+    scanning = true;
+    document.getElementById('scanBtn').textContent = '✕ Stop scanning';
     Quagga.init({
-      inputStream: { type: 'LiveStream', target: videoEl, constraints: { facingMode: { ideal: 'environment' } } },
+      inputStream: { type: 'LiveStream', target: videoEl, constraints: { facingMode: 'environment' } },
       decoder: { readers: ['ean_reader', 'upc_reader', 'ean_8_reader'] }, locate: true
     }, err => {
-      if (err) {
-        if (scannerTarget === videoEl) {
-          const status = videoEl.id === 'videoAdd' ? document.getElementById('addScanMsg') : null;
-          if (status) { status.style.color = 'var(--rust)'; status.textContent = err.message || 'Camera unavailable — check camera permission.'; }
-          else scanResult.innerHTML = `<div class="result missing"><strong>Camera unavailable</strong>${escapeHtml(err.message || 'Check camera permission.')}</div>`;
-        }
-        stopScan();
-        return;
-      }
+      if (err) { scanResult.innerHTML = `<div class="result missing"><strong>Camera unavailable</strong>${err.message || 'Check camera permission.'}</div>`; stopScan(); return; }
       Quagga.start();
     });
     Quagga.offDetected();
-    Quagga.onDetected(d => {
-      const code = d && d.codeResult && d.codeResult.code;
-      if (!code || !scanning) return;
-      const cb = scannerOnCode;
-      stopScan();
-      if (cb) cb(code);
-    });
+    Quagga.onDetected(d => { onCode(d.codeResult.code); stopScan(); });
   }
-
   function stopScan() {
     if (!scanning) return;
     scanning = false;
     try { Quagga.stop(); } catch (e) {}
-    if (scannerButton) {
-      scannerButton.textContent = scannerButton.id === 'addScanBtn' ? '📷 Scan barcode' : '📷 Scan a barcode instead';
-    }
-    if (scannerBox) scannerBox.style.display = 'none';
-    scannerTarget = scannerButton = scannerBox = scannerOnCode = null;
+    document.getElementById('scanBtn').textContent = '📷 Scan a barcode instead';
+    scanBox.style.display = 'none';
   }
 
   // ---- Library tab ----
@@ -747,50 +605,6 @@
       : `<div class="${cls} ${cls === 'thumb' ? 'thumb-ph' : ''}" ${cls==='cover' ? 'style="display:flex;align-items:center;justify-content:center;"' : ''}>${escapeHtml(i.title[0] || '?')}</div>`;
   }
 
-  function formatRuntime(minutes) {
-    if (!minutes || !isFinite(minutes)) return '';
-    const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
-    return h ? `${h}h ${m}m` : `${m}m`;
-  }
-  function formatBytes(bytes) {
-    if (!bytes || !isFinite(bytes)) return '';
-    const gb = bytes / 1073741824;
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${Math.round(bytes / 1048576)} MB`;
-  }
-  function metaLine(i) {
-    const bits = [];
-    if (i.productionYear) bits.push(String(i.productionYear));
-    if (i.format) bits.push(i.format);
-    if (i.communityRating) bits.push(`★ ${Number(i.communityRating).toFixed(1)}`);
-    if (i.played) bits.push('Watched');
-    return bits.join(' · ');
-  }
-
-  function detailRows(i) {
-    const rows = [];
-    const add = (label, value) => { if (value !== null && value !== undefined && String(value).trim() !== '') rows.push(`<div class="detail-label">${escapeHtml(label)}</div><div class="detail-value">${escapeHtml(String(value))}</div>`); };
-    add('Format', i.format);
-    add('Year', i.productionYear);
-    add('Premiere', i.premiereDate ? new Date(i.premiereDate).toLocaleDateString() : '');
-    add('Runtime', i.runtimeMinutes ? formatRuntime(Number(i.runtimeMinutes)) : '');
-    add('Community rating', i.communityRating ? `★ ${Number(i.communityRating).toFixed(1)}` : '');
-    add('Critic rating', i.criticRating ? `★ ${Number(i.criticRating).toFixed(1)}` : '');
-    add('Age rating', i.officialRating);
-    add('Video', i.videoLabel || [i.videoWidth && `${i.videoWidth}×${i.videoHeight || ''}`, i.videoCodec].filter(Boolean).join(' · '));
-    add('Audio', i.audioLabel || i.audioCodec);
-    add('Subtitles', i.hasSubtitles ? 'Yes' : (i.hasSubtitles === false ? 'No' : ''));
-    add('Watched', i.played ? 'Yes' : 'No');
-    add('Play count', i.playCount ? i.playCount : '');
-    add('Last watched', i.lastPlayed ? new Date(i.lastPlayed).toLocaleDateString() : '');
-    add('Added', i.added ? new Date(i.added).toLocaleDateString() : '');
-    add('File size', i.fileSize ? formatBytes(Number(i.fileSize)) : '');
-    add('Container', i.container ? String(i.container).toUpperCase() : '');
-    add('Barcode', i.barcode);
-    add('Media type', i.mediaType);
-    add('Status', i.status);
-    return rows.join('');
-  }
-
   function renderLibrary() {
     document.getElementById('viewGridBtn').classList.toggle('active', view === 'grid');
     document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
@@ -801,7 +615,7 @@
       .sort((a,b) => a.title.localeCompare(b.title));
     libCount.textContent = data.items.length;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
+      libList.innerHTML = `<div class="empty">${!ready ? 'Set up your GitHub repository in the Sync tab first.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
       return;
     }
     if (view === 'grid') {
@@ -814,30 +628,15 @@
       libList.querySelectorAll('.gdel').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
     } else {
       libList.innerHTML = items.map(i => `
-        <div class="libitem" data-id="${escapeHtml(i.id)}">
-          <div class="libitem-main" role="button" tabindex="0" aria-expanded="false">
-            ${coverOrPlaceholder(i, 'thumb')}
-            <div class="meta">
-              <div class="title">${escapeHtml(i.title)}</div>
-              <div class="sub">${escapeHtml(metaLine(i) || (i.format || 'Unknown'))}</div>
-            </div>
-            <button type="button" class="expand" aria-label="Show details">⌄</button>
-            <button type="button" data-id="${escapeHtml(i.id)}" class="del">Remove</button>
+        <div class="libitem">
+          ${coverOrPlaceholder(i, 'thumb')}
+          <div class="meta">
+            <div class="title">${escapeHtml(i.title)}</div>
+            <div class="sub">${i.format || 'Unknown'}${i.barcode ? ' · ' + escapeHtml(i.barcode) : ''}</div>
           </div>
-          <div class="libitem-details"><div class="detail-grid">${detailRows(i)}</div></div>
+          <button data-id="${i.id}" class="del">Remove</button>
         </div>`).join('');
-      libList.querySelectorAll('.libitem-main').forEach(row => {
-        const toggle = () => {
-          const item = row.closest('.libitem');
-          const open = item.classList.toggle('open');
-          row.setAttribute('aria-expanded', String(open));
-          row.querySelector('.expand').textContent = open ? '⌃' : '⌄';
-          row.querySelector('.expand').setAttribute('aria-label', open ? 'Hide details' : 'Show details');
-        };
-        row.addEventListener('click', e => { if (!e.target.closest('.del')) toggle(); });
-        row.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) { e.preventDefault(); toggle(); } });
-      });
-      libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeItem(b.dataset.id); }));
+      libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
     }
   }
 
@@ -909,7 +708,7 @@
         let added = 0;
         incomingItems.forEach(i => {
           if (i && i.title && !existing.has(i.title.toLowerCase())) {
-            data.items.push({ ...i, id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', cover: i.cover || null, added: i.added || new Date().toISOString() });
+            data.items.push({ id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', cover: i.cover || null, added: i.added || new Date().toISOString() });
             existing.add(i.title.toLowerCase());
             added++;
           }
@@ -936,7 +735,7 @@
   function renderWishlist() {
     const wishList = document.getElementById('wishList');
     const items = [...data.wishlist].sort((a,b) => a.title.localeCompare(b.title));
-    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : 'Nothing on your wishlist yet.'}</div>`; return; }
+    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Set up your GitHub repository in the Sync tab first.' : 'Nothing on your wishlist yet.'}</div>`; return; }
     wishList.innerHTML = items.map(i => `
       <div class="libitem">
         <div class="meta"><div class="title">${escapeHtml(i.title)}</div></div>
@@ -952,7 +751,7 @@
   document.getElementById('wishAddBtn').addEventListener('click', async () => {
     const title = document.getElementById('wishTitle').value.trim();
     const msg = document.getElementById('wishMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Open Admin to configure GitHub saving.'; return; }
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Set up your GitHub repository in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     data.wishlist.push({ id: Date.now().toString(36), title, added: new Date().toISOString() });
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
@@ -976,23 +775,11 @@
 
   document.getElementById('addScanBtn').addEventListener('click', () => {
     const host = document.getElementById('addScanHost');
-    const btn = document.getElementById('addScanBtn');
     if (scanning) { stopScan(); host.innerHTML=''; return; }
-    host.innerHTML = '<div id="scanBoxAdd" style="margin-top:14px;border-radius:12px;overflow:hidden;position:relative;background:#000;aspect-ratio:4/3;"><video id="videoAdd" playsinline muted style="width:100%;height:100%;object-fit:cover;"></video><div class="scanline"></div></div><p id="addScanMsg" style="color:var(--ink-dim);font-size:12px;margin-top:8px;">Point the camera at the barcode.</p>';
-    startScan(document.getElementById('videoAdd'), document.getElementById('scanBoxAdd'), btn, async code => {
+    host.innerHTML = '<div id="scanBoxAdd" style="margin-top:14px;border-radius:12px;overflow:hidden;position:relative;background:#000;aspect-ratio:4/3;"><video id="videoAdd" playsinline muted style="width:100%;height:100%;object-fit:cover;"></video></div>';
+    startScan(document.getElementById('videoAdd'), document.getElementById('scanBoxAdd'), code => {
       document.getElementById('addBarcode').value = code;
-      const msg = document.getElementById('addScanMsg');
-      msg.textContent = 'Looking up title…';
-      const product = await lookupBarcode(code);
-      if (product) {
-        document.getElementById('addTitle').value = product.title;
-        document.getElementById('addTitle').dispatchEvent(new Event('input'));
-        msg.style.color = 'var(--teal)';
-        msg.textContent = `Found: ${product.title}`;
-      } else {
-        msg.style.color = 'var(--rust)';
-        msg.textContent = `Barcode ${code} found, but no title was returned. Enter the title manually.`;
-      }
+      host.innerHTML = '';
     });
   });
 
@@ -1001,11 +788,11 @@
     const format = document.getElementById('addFormat').value;
     const barcode = document.getElementById('addBarcode').value.trim();
     const msg = document.getElementById('saveMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Open Admin to configure GitHub saving.'; return; }
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Set up your GitHub repository in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Fetching cover…';
     const cover = await fetchCover(title, format);
-    data.items.push({ id: Date.now().toString(36), title, format, barcode, cover, added: new Date().toISOString(), productionYear: null, premiereDate: null, officialRating: null, communityRating: null, criticRating: null, runtimeMinutes: null, container: null, fileSize: null, videoLabel: null, videoWidth: null, videoHeight: null, videoCodec: null, audioLabel: null, audioCodec: null, hasSubtitles: false, played: false, playCount: 0, lastPlayed: null, mediaType: null, status: null, unplayedCount: null });
+    data.items.push({ id: Date.now().toString(36), title, format, barcode, cover, added: new Date().toISOString() });
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
@@ -1023,22 +810,11 @@
     if (incoming.jsonError) { msg.style.color = 'var(--rust)'; msg.textContent = "That looked like Jellyfin JSON but wasn't complete — copy the entire response, starting from the very first { and ending at the final }."; return; }
     const list = incoming.items;
     if (!list.length) { msg.style.color = 'var(--rust)'; msg.textContent = 'Could not find any titles in that text.'; return; }
-    const existing = new Map(data.items.map(i => [i.title.toLowerCase(), i]));
+    const existing = new Set(data.items.map(i => i.title.toLowerCase()));
     const fresh = [];
-    let updated = 0;
     list.forEach(t => {
       const key = t.title.toLowerCase();
-      const existingItem = existing.get(key);
-      if (existingItem) {
-        Object.keys(t).forEach(k => {
-          if (k !== 'title' && k !== 'format' && t[k] !== null && t[k] !== '' && t[k] !== undefined) existingItem[k] = t[k];
-        });
-        if ((!existingItem.format || existingItem.format === 'Unknown') && t.format) existingItem.format = t.format;
-        updated++;
-      } else {
-        fresh.push({ ...t, id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t.title, format: t.format || 'Unknown', barcode: '', cover: null, added: new Date().toISOString() });
-        existing.set(key, fresh[fresh.length - 1]);
-      }
+      if (!existing.has(key)) { fresh.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t.title, format: t.format, barcode: '', cover: null, added: new Date().toISOString() }); existing.add(key); }
     });
     for (let i = 0; i < fresh.length; i++) {
       msg.style.color = 'var(--ink-dim)';
@@ -1049,7 +825,7 @@
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Updated ${updated} existing title${updated===1?'':'s'} and added ${fresh.length} new title${fresh.length===1?'':'s'}.` : 'Could not save to GitHub. Try again.';
+    msg.textContent = ok ? `Added ${fresh.length} new title${fresh.length===1?'':'s'} (${list.length - fresh.length} already in your library).` : 'Could not save to GitHub. Try again.';
     if (ok) document.getElementById('importText').value = '';
     renderLibrary();
   });
