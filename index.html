@@ -3,50 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Do I Have It?</title>
+<title>Do I Have It</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #1c1b1a;
-    --panel: #26241f;
-    --ink: #ede8de;
-    --ink-dim: #a89e8c;
-    --amber: #d4a24c;
-    --teal: #4f8f83;
-    --rust: #b5563c;
-    --line: #3a372f;
-    font-family: 'IBM Plex Sans', system-ui, sans-serif;
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #1c1b1a; --panel: #26241f; --ink: #ede8de; --ink-dim: #a89e8c;
+    --amber: #d4a24c; --teal: #4f8f83; --rust: #b5563c; --line: #3a372f;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif; box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg: #f2ede2;
-      --panel: #ffffff;
-      --ink: #201e1a;
-      --ink-dim: #6b6355;
-      --line: #ded5c2;
-    }
+    :root:not([data-theme="dark"]) { --bg: #f2ede2; --panel: #ffffff; --ink: #201e1a; --ink-dim: #6b6355; --line: #ded5c2; }
   }
-  :root[data-theme="dark"] {
-    --bg: #1c1b1a; --panel: #26241f; --ink: #ede8de; --ink-dim: #a89e8c; --line: #3a372f;
-  }
+  :root[data-theme="dark"] { --bg: #1c1b1a; --panel: #26241f; --ink: #ede8de; --ink-dim: #a89e8c; --line: #3a372f; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; height: 100%; background: var(--bg); color: var(--ink);
-    display: flex; flex-direction: column; max-width: 480px; margin-inline: auto;
-  }
-  header {
-    padding: 20px 20px 14px; border-bottom: 1px solid var(--line);
-  }
-  header h1 {
-    font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; margin: 0;
-    letter-spacing: 0.2px;
-  }
+  body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; max-width: 480px; margin-inline: auto; }
+  header { padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
+  header h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; margin: 0; }
   header p { margin: 4px 0 0; color: var(--ink-dim); font-size: 13px; }
   main { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
   .field { margin-bottom: 14px; }
@@ -56,60 +32,50 @@
     background: var(--panel); color: var(--ink); font-size: 16px; font-family: inherit;
   }
   input[type=text]:focus, select:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
-  button {
-    font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
-    border: none; border-radius: 10px; padding: 13px 16px;
-  }
+  button { font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; border: none; border-radius: 10px; padding: 13px 16px; }
   .btn-primary { background: var(--amber); color: #201a0d; width: 100%; }
   .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); width: 100%; }
   .btn-primary:active, .btn-secondary:active { opacity: 0.8; }
-  .result {
-    margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 15px; line-height: 1.4;
-  }
+  .warn { font-size: 12px; color: var(--amber); margin-top: -8px; margin-bottom: 12px; }
+  .result { margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 15px; line-height: 1.4; }
   .result.own { background: rgba(79,143,131,0.18); border: 1px solid var(--teal); }
   .result.missing { background: rgba(181,86,60,0.15); border: 1px solid var(--rust); }
+  .result.wish { background: rgba(212,162,76,0.15); border: 1px solid var(--amber); margin-top: 8px; }
   .result strong { display: block; font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 2px; }
-  #scanBox {
-    margin-top: 14px; border-radius: 12px; overflow: hidden; position: relative;
-    background: #000; display: none; aspect-ratio: 4/3;
-  }
+  #scanBox { margin-top: 14px; border-radius: 12px; overflow: hidden; position: relative; background: #000; display: none; aspect-ratio: 4/3; }
   #scanBox video { width: 100%; height: 100%; object-fit: cover; }
-  #scanBox .scanline {
-    position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--amber);
-    box-shadow: 0 0 8px var(--amber);
-  }
-  .libitem {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 0; border-bottom: 1px solid var(--line); gap: 10px;
-  }
-  .libitem .meta { min-width: 0; }
+  #scanBox .scanline { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .libitem { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); gap: 10px; }
+  .libitem .thumb { width: 36px; height: 52px; border-radius: 5px; object-fit: cover; background: var(--panel); flex-shrink: 0; }
+  .libitem .thumb-ph { display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; color: var(--ink-dim); font-size: 15px; }
+  .libitem .meta { min-width: 0; flex: 1; }
   .libitem .title { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .libitem .sub { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
   .libitem button { background: none; color: var(--ink-dim); padding: 6px; font-size: 13px; flex-shrink: 0; }
   .empty { color: var(--ink-dim); font-size: 14px; padding: 30px 0; text-align: center; }
-  nav {
-    position: fixed; bottom: 0; left: 0; right: 0; display: flex;
-    background: var(--panel); border-top: 1px solid var(--line);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    max-width: 480px; margin-inline: auto;
-  }
-  nav button {
-    flex: 1; background: none; color: var(--ink-dim); border-radius: 0;
-    padding: 14px 0 10px; font-size: 13px; border-top: 2px solid transparent;
-  }
+  .libgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px,1fr)); gap: 14px 12px; }
+  .gridcard { position: relative; }
+  .gridcard .cover { width: 100%; aspect-ratio: 2/3; border-radius: 8px; object-fit: cover; background: var(--panel); display: flex; align-items: center; justify-content: center; color: var(--ink-dim); font-family: 'Fraunces', serif; font-size: 26px; overflow: hidden; }
+  .gridcard .gtitle { font-size: 11.5px; margin-top: 6px; line-height: 1.25; max-height: 2.6em; overflow: hidden; }
+  .gridcard .gdel { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 999px; width: 22px; height: 22px; padding: 0; font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .viewToggle { display: flex; gap: 8px; margin-bottom: 14px; }
+  .viewToggle button { flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--ink-dim); padding: 8px; font-size: 13px; }
+  .viewToggle button.active { color: var(--amber); border-color: var(--amber); }
+  .chipRow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip { background: var(--panel); border: 1px solid var(--line); color: var(--ink-dim); padding: 6px 12px; font-size: 12px; border-radius: 999px; width: auto; }
+  .chip.active { color: var(--amber); border-color: var(--amber); }
+  nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); max-width: 480px; margin-inline: auto; }
+  nav button { flex: 1; background: none; color: var(--ink-dim); border-radius: 0; padding: 12px 0 9px; font-size: 11.5px; border-top: 2px solid transparent; }
   nav button.active { color: var(--amber); border-top: 2px solid var(--amber); }
   .tab { display: none; }
   .tab.active { display: block; }
-  .count-pill {
-    display: inline-block; background: var(--line); color: var(--ink-dim);
-    font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
-  }
+  .count-pill { display: inline-block; background: var(--line); color: var(--ink-dim); font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Do I have it?</h1>
+  <h1>Do I Have It</h1>
   <p>Your disc collection, always in your pocket</p>
 </header>
 
@@ -127,12 +93,27 @@
   </section>
 
   <section id="tab-library" class="tab">
+    <div class="viewToggle">
+      <button id="viewGridBtn">▦ Grid</button>
+      <button id="viewListBtn">≡ List</button>
+    </div>
     <div class="field">
       <label for="libFilter">Filter your library<span class="count-pill" id="libCount">0</span></label>
       <input type="text" id="libFilter" placeholder="Filter..." autocomplete="off">
     </div>
+    <div class="chipRow" id="formatChips">
+      <button class="chip active" data-fmt="all">All</button>
+      <button class="chip" data-fmt="DVD">DVD</button>
+      <button class="chip" data-fmt="Blu-ray">Blu-ray</button>
+      <button class="chip" data-fmt="4K UHD">4K UHD</button>
+      <button class="chip" data-fmt="Box set">Box set</button>
+      <button class="chip" data-fmt="Unknown">Unknown</button>
+    </div>
     <div id="libList"></div>
     <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn-secondary" id="fetchCoversBtn" style="flex:1;">🖼 Fetch missing covers</button>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:10px;">
       <button class="btn-secondary" id="exportBtn" style="flex:1;">⬇ Export backup</button>
       <button class="btn-secondary" id="restoreBtn" style="flex:1;">⬆ Restore backup</button>
     </div>
@@ -140,18 +121,26 @@
     <p id="backupMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
   </section>
 
+  <section id="tab-wishlist" class="tab">
+    <div class="field">
+      <label for="wishTitle">Add a title you're hunting for</label>
+      <input type="text" id="wishTitle" placeholder="Film or show title" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="wishAddBtn">Add to wishlist</button>
+    <p id="wishMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
+    <div id="wishList" style="margin-top:18px;"></div>
+  </section>
+
   <section id="tab-add" class="tab">
     <div class="field">
       <label for="addTitle">Title</label>
       <input type="text" id="addTitle" placeholder="Film or show title" autocomplete="off">
     </div>
+    <p class="warn" id="dupWarn" style="display:none;"></p>
     <div class="field">
       <label for="addFormat">Format</label>
       <select id="addFormat">
-        <option>DVD</option>
-        <option>Blu-ray</option>
-        <option>4K UHD</option>
-        <option>Box set</option>
+        <option>DVD</option><option>Blu-ray</option><option>4K UHD</option><option>Box set</option><option>Unknown</option>
       </select>
     </div>
     <div class="field">
@@ -169,21 +158,28 @@
 
     <div class="field">
       <label for="ghOwner">GitHub username</label>
-      <input type="text" id="ghOwner" placeholder="e.g. yahayaElshazli" autocomplete="off">
+      <input type="text" id="ghOwner" placeholder="your-username" autocomplete="off">
     </div>
     <div class="field">
       <label for="ghRepo">Repository name</label>
-      <input type="text" id="ghRepo" placeholder="e.g. Do-I-have-it" autocomplete="off">
+      <input type="text" id="ghRepo" placeholder="your-repo" autocomplete="off">
     </div>
     <div class="field">
-      <label for="ghPath">File path in repo</label>
+      <label for="ghPath">Library file path</label>
       <input type="text" id="ghPath" placeholder="library.json" autocomplete="off" value="library.json">
+    </div>
+    <div class="field">
+      <label for="ghWishPath">Wishlist file path</label>
+      <input type="text" id="ghWishPath" placeholder="wishlist.json" autocomplete="off" value="wishlist.json">
     </div>
     <div class="field">
       <label for="ghToken">Personal access token</label>
       <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
-    <button class="btn-primary" id="ghConnectBtn">Connect</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Connect</button>
+      <button class="btn-secondary" id="resyncBtn" style="flex:1;">Sync now</button>
+    </div>
 
     <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
       <summary style="cursor:pointer; color:var(--ink);">How to get a token</summary>
@@ -194,12 +190,13 @@
         <li>Generate it, copy it, and paste it above. It's stored only on this device.</li>
       </ol>
     </details>
+    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Library and wishlist are now saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
 
     <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
 
     <div class="field">
       <label for="importText">Paste titles, or paste JSON from Jellyfin</label>
-      <textarea id="importText" rows="8" placeholder="One title per line, e.g.&#10;Paddington 2&#10;The Grand Budapest Hotel&#10;&#10;...or paste a whole Jellyfin API response and it'll pull the titles out automatically." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:15px; font-family:inherit; resize:vertical;"></textarea>
+      <textarea id="importText" rows="8" placeholder="One title per line, e.g.&#10;Paddington 2&#10;The Grand Budapest Hotel&#10;&#10;...or paste a whole Jellyfin API response and it'll pull titles + guess format + fetch covers automatically." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:15px; font-family:inherit; resize:vertical;"></textarea>
     </div>
     <button class="btn-primary" id="importBtn">Import titles</button>
     <p id="importMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
@@ -211,10 +208,10 @@
         <li>In Jellyfin, open <em>Dashboard → API Keys</em> and create a key.</li>
         <li>Find your user ID: <em>Dashboard → Users</em>, click your user — it's in the page URL.</li>
         <li>Visit this in your browser (fill in your server, key, and user ID):<br>
-        <code style="word-break:break-all; font-size:11px;">http://SERVER:8096/Users/USER_ID/Items?api_key=API_KEY&Recursive=true&IncludeItemTypes=Movie,Series&SortBy=SortName</code></li>
+        <code style="word-break:break-all; font-size:11px;">http://SERVER:8096/Users/USER_ID/Items?api_key=API_KEY&Recursive=true&IncludeItemTypes=Movie,Series&Fields=MediaSources&SortBy=SortName</code></li>
         <li>Select all the JSON text that appears, copy it, and paste it into the box above.</li>
       </ol>
-      <p>Or simpler: just type/paste a plain list of titles, one per line.</p>
+      <p>The <code>&Fields=MediaSources</code> part lets format be guessed from video resolution (DVD/Blu-ray/4K) — it's approximate, so double-check a few after importing. Box sets are detected automatically. Plain lines of text work too, just without format guessing.</p>
     </details>
   </section>
 
@@ -223,6 +220,7 @@
 <nav>
   <button data-tab="check" class="active">Check</button>
   <button data-tab="library">Library</button>
+  <button data-tab="wishlist">Wishlist</button>
   <button data-tab="add">Add</button>
   <button data-tab="import">Sync</button>
 </nav>
@@ -231,80 +229,158 @@
 <script>
 (function() {
   const CONFIG_KEY = 'reelcheck-config';
+  const CACHE_KEY = 'reelcheck-cache';
+  const VIEW_KEY = 'reelcheck-view';
 
   function loadConfig() {
-    try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
-    catch (e) { return {}; }
+    try {
+      const c = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+      if (c.path && !c.libraryPath) c.libraryPath = c.path; // migrate old field name
+      return c;
+    } catch (e) { return {}; }
   }
-  function saveConfig(cfg) {
-    try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
-    catch (e) { console.error('Storage error', e); }
-  }
-  let cfg = loadConfig();
-  let library = [];
-  let sha = null;
-  let ready = false; // true once we've successfully loaded from GitHub at least once
+  function saveConfig(c) { try { localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); } catch (e) {} }
+  function loadCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || null; } catch (e) { return null; } }
+  function persistCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify(cacheState)); } catch (e) {} }
 
-  function configComplete(c) { return !!(c.owner && c.repo && c.path && c.token); }
-  function apiUrl(c) { return `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${encodeURIComponent(c.path)}`; }
-  function ghHeaders(c) { return { Authorization: `token ${c.token}`, Accept: 'application/vnd.github+json' }; }
+  let cfg = loadConfig();
+  let data = { items: [], wishlist: [] };
+  let sha = { items: null, wishlist: null };
+  let ready = false;
+  let view = localStorage.getItem(VIEW_KEY) || 'grid';
+  let activeFormat = 'all';
+  let cacheState = loadCache() || { cfg: null, items: [], wishlist: [], itemsPending: false, wishlistPending: false, timestamp: null };
+
+  function configComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath && c.token); }
+  function sameRepo(c1, c2) { return c1 && c2 && c1.owner === c2.owner && c1.repo === c2.repo && c1.libraryPath === c2.libraryPath && c1.wishlistPath === c2.wishlistPath; }
+  function pathFor(kind) { return kind === 'items' ? cfg.libraryPath : cfg.wishlistPath; }
+  function apiUrlFor(path) { return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path)}`; }
+  function ghHeaders() { return { Authorization: `token ${cfg.token}`, Accept: 'application/vnd.github+json' }; }
   function b64Encode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m,p)=>String.fromCharCode('0x'+p))); }
   function b64Decode(str) { return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function normalizeItems(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.items) ? raw.items : []); }
+  function normalizeWishlist(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.wishlist) ? raw.wishlist : []); }
 
   const statusEl = document.getElementById('syncStatus');
   function setStatus(msg, kind) {
     statusEl.textContent = msg;
-    statusEl.style.borderColor = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : 'var(--line)';
-    statusEl.style.color = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : 'var(--ink-dim)';
+    statusEl.style.borderColor = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : kind === 'warn' ? 'var(--amber)' : 'var(--line)';
+    statusEl.style.color = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : kind === 'warn' ? 'var(--amber)' : 'var(--ink-dim)';
   }
 
-  async function fetchLibrary() {
+  function markPending(kind) {
+    cacheState = { cfg, items: data.items, wishlist: data.wishlist, timestamp: Date.now(),
+      itemsPending: kind === 'items' ? true : cacheState.itemsPending,
+      wishlistPending: kind === 'wishlist' ? true : cacheState.wishlistPending };
+    persistCache();
+  }
+  function markSynced(kind) {
+    cacheState = { cfg, items: data.items, wishlist: data.wishlist, timestamp: Date.now(),
+      itemsPending: kind === 'items' ? false : cacheState.itemsPending,
+      wishlistPending: kind === 'wishlist' ? false : cacheState.wishlistPending };
+    persistCache();
+  }
+
+  async function fetchFile(kind) {
+    const res = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
+    if (res.status === 200) { const gh = await res.json(); sha[kind] = gh.sha; return { ok: true, raw: gh.content ? JSON.parse(b64Decode(gh.content)) : null }; }
+    if (res.status === 404) { sha[kind] = null; return { ok: true, raw: null }; }
+    return { ok: false, status: res.status };
+  }
+
+  async function pushFile(kind, retry) {
+    if (!configComplete(cfg)) return false;
+    try {
+      const payload = kind === 'items' ? data.items : data.wishlist;
+      const body = { message: `Update ${kind === 'items' ? 'library' : 'wishlist'} via Do I Have It`, content: b64Encode(JSON.stringify(payload, null, 2)) };
+      if (sha[kind]) body.sha = sha[kind];
+      const res = await fetch(apiUrlFor(pathFor(kind)), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (res.ok) { const d = await res.json(); sha[kind] = d.content.sha; markSynced(kind); return true; }
+      if (res.status === 409 && !retry) {
+        const r2 = await fetch(apiUrlFor(pathFor(kind)), { headers: ghHeaders() });
+        if (r2.ok) { const d2 = await r2.json(); sha[kind] = d2.sha; return pushFile(kind, true); }
+      }
+      markPending(kind); return false;
+    } catch (e) { markPending(kind); return false; }
+  }
+
+  async function fetchAll() {
     if (!configComplete(cfg)) { setStatus('Not connected yet — fill in the details below.', null); return; }
     setStatus('Connecting to GitHub…', null);
+    const cacheValid = cacheState && sameRepo(cacheState.cfg, cfg);
     try {
-      const res = await fetch(apiUrl(cfg), { headers: ghHeaders(cfg) });
-      if (res.status === 200) {
-        const data = await res.json();
-        sha = data.sha;
-        library = data.content ? (JSON.parse(b64Decode(data.content)) || []) : [];
-        ready = true;
-        setStatus(`Connected — ${library.length} title${library.length === 1 ? '' : 's'} loaded.`, 'ok');
-      } else if (res.status === 404) {
-        library = []; sha = null; ready = true;
-        setStatus('Connected — no file yet, one will be created when you add a title.', 'ok');
-      } else if (res.status === 401 || res.status === 403) {
-        setStatus('Could not connect — check your token and its permissions.', 'err');
-      } else {
-        setStatus(`Could not connect — GitHub returned ${res.status}.`, 'err');
-      }
+      const libRes = await fetchFile('items');
+      if (!libRes.ok) throw new Error('lib ' + libRes.status);
+      const wishRes = await fetchFile('wishlist');
+      if (!wishRes.ok) throw new Error('wish ' + wishRes.status);
+
+      let items = normalizeItems(libRes.raw);
+      let wishlist = normalizeWishlist(wishRes.raw);
+      // migrate a wishlist that used to live embedded inside the old combined library file
+      const legacyWishlist = (libRes.raw && !Array.isArray(libRes.raw) && Array.isArray(libRes.raw.wishlist)) ? libRes.raw.wishlist : null;
+      let migrated = false;
+      if (legacyWishlist && legacyWishlist.length && wishlist.length === 0) { wishlist = legacyWishlist; migrated = true; }
+
+      data = { items, wishlist };
+      ready = true;
+
+      let resynced = false;
+      if (cacheValid && cacheState.itemsPending) { data.items = cacheState.items; if (await pushFile('items')) resynced = true; }
+      if (cacheValid && cacheState.wishlistPending) { data.wishlist = cacheState.wishlist; if (await pushFile('wishlist')) resynced = true; }
+      if (migrated) { await pushFile('wishlist'); await pushFile('items'); }
+
+      cacheState = { cfg, items: data.items, wishlist: data.wishlist, itemsPending: false, wishlistPending: false, timestamp: Date.now() };
+      persistCache();
+      setStatus(`Connected — ${data.items.length} title${data.items.length===1?'':'s'}, ${data.wishlist.length} on wishlist.${resynced ? ' Offline changes synced.' : ''}${migrated ? ' Wishlist moved to its own file.' : ''}`, 'ok');
     } catch (e) {
-      setStatus('Could not reach GitHub. Check your connection.', 'err');
+      if (cacheValid) {
+        data = { items: cacheState.items, wishlist: cacheState.wishlist };
+        ready = true;
+        const when = cacheState.timestamp ? new Date(cacheState.timestamp).toLocaleString() : 'earlier';
+        setStatus(`Offline — showing cached data from ${when}.${(cacheState.itemsPending || cacheState.wishlistPending) ? ' You have unsynced changes.' : ''}`, 'warn');
+      } else {
+        setStatus('Could not reach GitHub and no offline copy is saved yet.', 'err');
+      }
     }
     renderAll();
   }
 
-  async function pushLibrary(retry) {
-    if (!configComplete(cfg)) return false;
+  async function fetchCover(title) {
     try {
-      const body = { message: 'Update library via Reel Check', content: b64Encode(JSON.stringify(library, null, 2)) };
-      if (sha) body.sha = sha;
-      const res = await fetch(apiUrl(cfg), { method: 'PUT', headers: { ...ghHeaders(cfg), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (res.ok) {
-        const data = await res.json();
-        sha = data.content.sha;
-        return true;
-      }
-      if (res.status === 409 && !retry) {
-        // sha out of date — refetch latest then retry once
-        const r2 = await fetch(apiUrl(cfg), { headers: ghHeaders(cfg) });
-        if (r2.ok) { const d2 = await r2.json(); sha = d2.sha; return pushLibrary(true); }
-      }
-      return false;
-    } catch (e) { return false; }
+      const res = await fetch(`https://itunes.apple.com/search?media=movie&limit=1&term=${encodeURIComponent(title)}`);
+      if (!res.ok) return null;
+      const d = await res.json();
+      const r = d.results && d.results[0];
+      return r && r.artworkUrl100 ? r.artworkUrl100.replace('100x100bb', '300x300bb') : null;
+    } catch (e) { return null; }
+  }
+
+  function guessFormat(o) {
+    if (o.Type === 'BoxSet') return 'Box set';
+    const streams = o.MediaSources && o.MediaSources[0] && o.MediaSources[0].MediaStreams;
+    const video = streams && streams.find(s => s.Type === 'Video');
+    const height = o.Height || (video && video.Height) || null;
+    if (!height) return 'Unknown';
+    if (height >= 1600) return '4K UHD';
+    if (height >= 720) return 'Blu-ray';
+    return 'DVD';
+  }
+
+  function extractItems(raw) {
+    raw = raw.trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
+      if (arr) return arr.map(o => ({ title: (o && (o.Name || o.name || o.title)) || '', format: guessFormat(o || {}) })).filter(x => x.title);
+    } catch (e) { /* not JSON */ }
+    return raw.split(/\r?\n/).flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean).map(t => ({ title: t, format: 'Unknown' }));
   }
 
   function renderAll() {
     renderLibrary();
+    renderWishlist();
     if (checkInput.value.trim()) checkInput.dispatchEvent(new Event('input'));
   }
 
@@ -312,22 +388,24 @@
     cfg = {
       owner: document.getElementById('ghOwner').value.trim(),
       repo: document.getElementById('ghRepo').value.trim(),
-      path: document.getElementById('ghPath').value.trim() || 'library.json',
+      libraryPath: document.getElementById('ghPath').value.trim() || 'library.json',
+      wishlistPath: document.getElementById('ghWishPath').value.trim() || 'wishlist.json',
       token: document.getElementById('ghToken').value.trim()
     };
-    if (!configComplete(cfg)) { setStatus('Fill in all four fields first.', 'err'); return; }
+    if (!configComplete(cfg)) { setStatus('Fill in all the fields first.', 'err'); return; }
     saveConfig(cfg);
-    fetchLibrary();
+    fetchAll();
   });
+  document.getElementById('resyncBtn').addEventListener('click', fetchAll);
 
-  // Prefill saved settings and connect automatically if we have them
   if (cfg.owner) document.getElementById('ghOwner').value = cfg.owner;
   if (cfg.repo) document.getElementById('ghRepo').value = cfg.repo;
-  if (cfg.path) document.getElementById('ghPath').value = cfg.path;
+  if (cfg.libraryPath) document.getElementById('ghPath').value = cfg.libraryPath;
+  if (cfg.wishlistPath) document.getElementById('ghWishPath').value = cfg.wishlistPath;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
-  if (configComplete(cfg)) fetchLibrary();
+  if (configComplete(cfg)) fetchAll();
 
-  // Tabs
+  // ---- Tabs ----
   document.querySelectorAll('nav button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -336,6 +414,7 @@
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
       stopScan();
       if (btn.dataset.tab === 'library') renderLibrary();
+      if (btn.dataset.tab === 'wishlist') renderWishlist();
     });
   });
 
@@ -345,54 +424,46 @@
   checkInput.addEventListener('input', () => {
     const q = checkInput.value.trim().toLowerCase();
     if (!q) { checkResults.innerHTML = ''; return; }
-    const matches = library.filter(i => i.title.toLowerCase().includes(q));
+    const matches = data.items.filter(i => i.title.toLowerCase().includes(q));
+    const wishMatch = data.wishlist.filter(i => i.title.toLowerCase().includes(q));
+    let html = '';
     if (matches.length) {
-      checkResults.innerHTML = matches.map(m =>
-        `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(m.title)} — ${m.format}</div>`
-      ).join('');
+      html += matches.map(m => `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(m.title)} — ${m.format}</div>`).join('');
     } else {
-      checkResults.innerHTML = `<div class="result missing"><strong>Not in your library</strong>No match for "${escapeHtml(checkInput.value.trim())}" — safe to buy!</div>`;
+      html += `<div class="result missing"><strong>Not in your library</strong>No match for "${escapeHtml(checkInput.value.trim())}" — safe to buy!</div>`;
     }
+    if (wishMatch.length) {
+      html += wishMatch.map(w => `<div class="result wish"><strong>📌 On your wishlist</strong>${escapeHtml(w.title)}</div>`).join('');
+    }
+    checkResults.innerHTML = html;
   });
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  // ---- Barcode scanning (Check tab) ----
+  // ---- Barcode scanning ----
   let scanning = false;
   const scanBox = document.getElementById('scanBox');
   const scanResult = document.getElementById('scanResult');
   document.getElementById('scanBtn').addEventListener('click', () => {
     if (scanning) { stopScan(); return; }
     startScan(document.getElementById('video'), scanBox, code => {
-      const match = library.find(i => i.barcode === code);
-      if (match) {
-        scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${match.format}</div>`;
-      } else {
-        scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(code)} — safe to buy, or add it in the Add tab.</div>`;
-      }
+      const match = data.items.find(i => i.barcode === code);
+      scanResult.innerHTML = match
+        ? `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${match.format}</div>`
+        : `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(code)} — safe to buy, or add it in the Add tab.</div>`;
     });
   });
-
   function startScan(videoEl, boxEl, onCode) {
     boxEl.style.display = 'block';
     scanning = true;
     document.getElementById('scanBtn').textContent = '✕ Stop scanning';
     Quagga.init({
       inputStream: { type: 'LiveStream', target: videoEl, constraints: { facingMode: 'environment' } },
-      decoder: { readers: ['ean_reader', 'upc_reader', 'ean_8_reader'] },
-      locate: true
+      decoder: { readers: ['ean_reader', 'upc_reader', 'ean_8_reader'] }, locate: true
     }, err => {
       if (err) { scanResult.innerHTML = `<div class="result missing"><strong>Camera unavailable</strong>${err.message || 'Check camera permission.'}</div>`; stopScan(); return; }
       Quagga.start();
     });
     Quagga.offDetected();
-    Quagga.onDetected(data => {
-      const code = data.codeResult.code;
-      onCode(code);
-      stopScan();
-    });
+    Quagga.onDetected(d => { onCode(d.codeResult.code); stopScan(); });
   }
   function stopScan() {
     if (!scanning) return;
@@ -406,51 +477,94 @@
   const libList = document.getElementById('libList');
   const libFilter = document.getElementById('libFilter');
   const libCount = document.getElementById('libCount');
+
+  document.getElementById('viewGridBtn').addEventListener('click', () => { view = 'grid'; localStorage.setItem(VIEW_KEY, view); renderLibrary(); });
+  document.getElementById('viewListBtn').addEventListener('click', () => { view = 'list'; localStorage.setItem(VIEW_KEY, view); renderLibrary(); });
+  document.querySelectorAll('#formatChips .chip').forEach(c => c.addEventListener('click', () => {
+    activeFormat = c.dataset.fmt;
+    document.querySelectorAll('#formatChips .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    renderLibrary();
+  }));
+
+  function coverOrPlaceholder(i, cls) {
+    return i.cover
+      ? `<img class="${cls}" src="${i.cover}" alt="" loading="lazy">`
+      : `<div class="${cls} ${cls === 'thumb' ? 'thumb-ph' : ''}" ${cls==='cover' ? 'style="display:flex;align-items:center;justify-content:center;"' : ''}>${escapeHtml(i.title[0] || '?')}</div>`;
+  }
+
   function renderLibrary() {
+    document.getElementById('viewGridBtn').classList.toggle('active', view === 'grid');
+    document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
     const q = libFilter.value.trim().toLowerCase();
-    const items = library.filter(i => i.title.toLowerCase().includes(q))
+    const items = data.items
+      .filter(i => i.title.toLowerCase().includes(q))
+      .filter(i => activeFormat === 'all' || (i.format || 'Unknown') === activeFormat)
       .sort((a,b) => a.title.localeCompare(b.title));
-    libCount.textContent = library.length;
+    libCount.textContent = data.items.length;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : (library.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
+      libList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
       return;
     }
-    libList.innerHTML = items.map(i => `
-      <div class="libitem">
-        <div class="meta">
-          <div class="title">${escapeHtml(i.title)}</div>
-          <div class="sub">${i.format}${i.barcode ? ' · ' + escapeHtml(i.barcode) : ''}</div>
-        </div>
-        <button data-id="${i.id}" class="del">Remove</button>
-      </div>`).join('');
-    libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', async () => {
-      const removed = library.find(i => i.id === b.dataset.id);
-      const prev = library;
-      library = library.filter(i => i.id !== b.dataset.id);
-      renderLibrary();
-      const msg = document.getElementById('backupMsg');
-      const ok = await pushLibrary();
-      if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = `Removed "${removed ? removed.title : ''}".`; }
-      else { library = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — removal undone.'; }
-    }));
+    if (view === 'grid') {
+      libList.innerHTML = `<div class="libgrid">${items.map(i => `
+        <div class="gridcard" data-id="${i.id}">
+          ${coverOrPlaceholder(i, 'cover')}
+          <div class="gtitle">${escapeHtml(i.title)}</div>
+          <button class="gdel" data-id="${i.id}">✕</button>
+        </div>`).join('')}</div>`;
+      libList.querySelectorAll('.gdel').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
+    } else {
+      libList.innerHTML = items.map(i => `
+        <div class="libitem">
+          ${coverOrPlaceholder(i, 'thumb')}
+          <div class="meta">
+            <div class="title">${escapeHtml(i.title)}</div>
+            <div class="sub">${i.format || 'Unknown'}${i.barcode ? ' · ' + escapeHtml(i.barcode) : ''}</div>
+          </div>
+          <button data-id="${i.id}" class="del">Remove</button>
+        </div>`).join('');
+      libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
+    }
   }
-  libFilter.addEventListener('input', renderLibrary);
 
-  // ---- Backup export / restore ----
+  async function removeItem(id) {
+    const removed = data.items.find(i => i.id === id);
+    const prev = data.items;
+    data.items = data.items.filter(i => i.id !== id);
+    renderLibrary();
+    const msg = document.getElementById('backupMsg');
+    const ok = await pushFile('items');
+    if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = `Removed "${removed ? removed.title : ''}".`; }
+    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — removal undone.'; }
+  }
+
+  document.getElementById('fetchCoversBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('backupMsg');
+    const missing = data.items.filter(i => !i.cover);
+    if (!missing.length) { msg.style.color = 'var(--teal)'; msg.textContent = 'Every title already has a cover.'; return; }
+    for (let i = 0; i < missing.length; i++) {
+      msg.style.color = 'var(--ink-dim)';
+      msg.textContent = `Fetching covers… (${i+1}/${missing.length})`;
+      const url = await fetchCover(missing[i].title);
+      if (url) missing[i].cover = url;
+    }
+    renderLibrary();
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+    const ok = await pushFile('items');
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok ? 'Covers updated.' : 'Fetched covers, but could not save to GitHub.';
+  });
+
+  // ---- Backup export / restore (covers both files) ----
   document.getElementById('exportBtn').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(library, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'reelcheck-backup-' + new Date().toISOString().slice(0,10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = 'do-i-have-it-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   });
-  document.getElementById('restoreBtn').addEventListener('click', () => {
-    document.getElementById('restoreFile').click();
-  });
+  document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('restoreFile').click());
   document.getElementById('restoreFile').addEventListener('change', (e) => {
     const file = e.target.files[0];
     const msg = document.getElementById('backupMsg');
@@ -458,33 +572,78 @@
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const items = JSON.parse(reader.result);
-        if (!Array.isArray(items)) throw new Error('not an array');
-        const existing = new Set(library.map(i => i.title.toLowerCase()));
+        const parsed = JSON.parse(reader.result);
+        const incomingItems = normalizeItems(parsed);
+        const incomingWishlist = normalizeWishlist(parsed);
+        const existing = new Set(data.items.map(i => i.title.toLowerCase()));
         let added = 0;
-        items.forEach(i => {
+        incomingItems.forEach(i => {
           if (i && i.title && !existing.has(i.title.toLowerCase())) {
-            library.push({ id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', added: i.added || new Date().toISOString() });
+            data.items.push({ id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', cover: i.cover || null, added: i.added || new Date().toISOString() });
             existing.add(i.title.toLowerCase());
             added++;
           }
         });
-        renderLibrary();
-        msg.style.color = 'var(--ink-dim)';
-        msg.textContent = 'Saving to GitHub…';
-        const ok = await pushLibrary();
+        const wExisting = new Set(data.wishlist.map(i => i.title.toLowerCase()));
+        let addedWish = 0;
+        incomingWishlist.forEach(i => { if (i && i.title && !wExisting.has(i.title.toLowerCase())) { data.wishlist.push(i); wExisting.add(i.title.toLowerCase()); addedWish++; } });
+        renderAll();
+        msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+        const okItems = await pushFile('items');
+        const okWish = addedWish ? await pushFile('wishlist') : true;
+        const ok = okItems && okWish;
         msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-        msg.textContent = ok ? `Restored ${added} title${added === 1 ? '' : 's'} from backup.` : 'Merged locally, but could not save to GitHub. Try again.';
+        msg.textContent = ok ? `Restored ${added} title${added===1?'':'s'} and ${addedWish} wishlist item${addedWish===1?'':'s'}.` : 'Merged locally, but could not save everything to GitHub. Try again.';
       } catch (err) {
-        msg.style.color = 'var(--rust)';
-        msg.textContent = 'That file didn\'t look like a valid backup.';
+        msg.style.color = 'var(--rust)'; msg.textContent = "That file didn't look like a valid backup.";
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   });
 
+  // ---- Wishlist tab ----
+  function renderWishlist() {
+    const wishList = document.getElementById('wishList');
+    const items = [...data.wishlist].sort((a,b) => a.title.localeCompare(b.title));
+    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : 'Nothing on your wishlist yet.'}</div>`; return; }
+    wishList.innerHTML = items.map(i => `
+      <div class="libitem">
+        <div class="meta"><div class="title">${escapeHtml(i.title)}</div></div>
+        <button data-id="${i.id}" class="delw">Remove</button>
+      </div>`).join('');
+    wishList.querySelectorAll('.delw').forEach(b => b.addEventListener('click', async () => {
+      const prev = data.wishlist;
+      data.wishlist = data.wishlist.filter(i => i.id !== b.dataset.id);
+      renderWishlist();
+      if (!(await pushFile('wishlist'))) { data.wishlist = prev; renderWishlist(); }
+    }));
+  }
+  document.getElementById('wishAddBtn').addEventListener('click', async () => {
+    const title = document.getElementById('wishTitle').value.trim();
+    const msg = document.getElementById('wishMsg');
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub in the Sync tab first.'; return; }
+    if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
+    data.wishlist.push({ id: Date.now().toString(36), title, added: new Date().toISOString() });
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+    const ok = await pushFile('wishlist');
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok ? `Added "${title}" to your wishlist.` : 'Could not save to GitHub. Try again.';
+    if (ok) document.getElementById('wishTitle').value = '';
+    renderWishlist();
+  });
+
   // ---- Add tab ----
+  const addTitle = document.getElementById('addTitle');
+  const dupWarn = document.getElementById('dupWarn');
+  addTitle.addEventListener('input', () => {
+    const q = addTitle.value.trim().toLowerCase();
+    if (q.length < 3) { dupWarn.style.display = 'none'; return; }
+    const match = data.items.find(i => i.title.toLowerCase().includes(q) || q.includes(i.title.toLowerCase()));
+    if (match) { dupWarn.style.display = 'block'; dupWarn.textContent = `⚠ You might already have "${match.title}".`; }
+    else dupWarn.style.display = 'none';
+  });
+
   document.getElementById('addScanBtn').addEventListener('click', () => {
     const host = document.getElementById('addScanHost');
     if (scanning) { stopScan(); host.innerHTML=''; return; }
@@ -495,63 +654,48 @@
     });
   });
 
-  // ---- Import tab ----
-  function extractTitles(raw) {
-    raw = raw.trim();
-    if (!raw) return [];
-    // Try JSON first (Jellyfin API shapes: {Items:[{Name:...}]} or a bare array of {Name:...})
-    try {
-      const parsed = JSON.parse(raw);
-      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
-      if (arr) {
-        return arr.map(o => (o && (o.Name || o.name || o.title)) || '').filter(Boolean);
-      }
-    } catch (e) { /* not JSON, fall through */ }
-    // Plain text: one title per line (also tolerate commas)
-    return raw.split(/\r?\n/).flatMap(line => line.split(',')).map(s => s.trim()).filter(Boolean);
-  }
-
-  document.getElementById('importBtn').addEventListener('click', async () => {
-    const raw = document.getElementById('importText').value;
-    const msg = document.getElementById('importMsg');
-    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub above first.'; return; }
-    const titles = extractTitles(raw);
-    if (!titles.length) {
-      msg.style.color = 'var(--rust)';
-      msg.textContent = 'Could not find any titles in that text.';
-      return;
-    }
-    const existing = new Set(library.map(i => i.title.toLowerCase()));
-    let added = 0;
-    titles.forEach(t => {
-      const key = t.toLowerCase();
-      if (!existing.has(key)) {
-        library.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t, format: 'Unknown', barcode: '', added: new Date().toISOString() });
-        existing.add(key);
-        added++;
-      }
-    });
-    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
-    const ok = await pushLibrary();
-    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Added ${added} new title${added === 1 ? '' : 's'} (${titles.length - added} already in your library).` : 'Could not save to GitHub. Try again.';
-    if (ok) document.getElementById('importText').value = '';
-    renderLibrary();
-  });
-
   document.getElementById('saveBtn').addEventListener('click', async () => {
-    const title = document.getElementById('addTitle').value.trim();
+    const title = addTitle.value.trim();
     const format = document.getElementById('addFormat').value;
     const barcode = document.getElementById('addBarcode').value.trim();
     const msg = document.getElementById('saveMsg');
     if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
-    library.push({ id: Date.now().toString(36), title, format, barcode, added: new Date().toISOString() });
-    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
-    const ok = await pushLibrary();
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Fetching cover…';
+    const cover = await fetchCover(title);
+    data.items.push({ id: Date.now().toString(36), title, format, barcode, cover, added: new Date().toISOString() });
+    msg.textContent = 'Saving to GitHub…';
+    const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
     msg.textContent = ok ? `Added "${title}" to your library.` : 'Could not save to GitHub. Try again.';
-    if (ok) { document.getElementById('addTitle').value = ''; document.getElementById('addBarcode').value = ''; }
+    if (ok) { addTitle.value = ''; document.getElementById('addBarcode').value = ''; dupWarn.style.display = 'none'; }
+    renderLibrary();
+  });
+
+  // ---- Import tab ----
+  document.getElementById('importBtn').addEventListener('click', async () => {
+    const raw = document.getElementById('importText').value;
+    const msg = document.getElementById('importMsg');
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub above first.'; return; }
+    const incoming = extractItems(raw);
+    if (!incoming.length) { msg.style.color = 'var(--rust)'; msg.textContent = 'Could not find any titles in that text.'; return; }
+    const existing = new Set(data.items.map(i => i.title.toLowerCase()));
+    const fresh = [];
+    incoming.forEach(t => {
+      const key = t.title.toLowerCase();
+      if (!existing.has(key)) { fresh.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t.title, format: t.format, barcode: '', cover: null, added: new Date().toISOString() }); existing.add(key); }
+    });
+    for (let i = 0; i < fresh.length; i++) {
+      msg.style.color = 'var(--ink-dim)';
+      msg.textContent = `Fetching covers… (${i+1}/${fresh.length})`;
+      fresh[i].cover = await fetchCover(fresh[i].title);
+    }
+    data.items.push(...fresh);
+    msg.textContent = 'Saving to GitHub…';
+    const ok = await pushFile('items');
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok ? `Added ${fresh.length} new title${fresh.length===1?'':'s'} (${incoming.length - fresh.length} already in your library).` : 'Could not save to GitHub. Try again.';
+    if (ok) document.getElementById('importText').value = '';
     renderLibrary();
   });
 })();
