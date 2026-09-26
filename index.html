@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Reel Check</title>
+<title>Do I Have It?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -165,6 +165,38 @@
   </section>
 
   <section id="tab-import" class="tab">
+    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Not connected yet — fill in the details below.</div>
+
+    <div class="field">
+      <label for="ghOwner">GitHub username</label>
+      <input type="text" id="ghOwner" placeholder="e.g. yahayaElshazli" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="ghRepo">Repository name</label>
+      <input type="text" id="ghRepo" placeholder="e.g. Do-I-have-it" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="ghPath">File path in repo</label>
+      <input type="text" id="ghPath" placeholder="library.json" autocomplete="off" value="library.json">
+    </div>
+    <div class="field">
+      <label for="ghToken">Personal access token</label>
+      <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
+    </div>
+    <button class="btn-primary" id="ghConnectBtn">Connect</button>
+
+    <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
+      <summary style="cursor:pointer; color:var(--ink);">How to get a token</summary>
+      <ol style="padding-left:18px; margin-top:10px;">
+        <li>On GitHub: <em>Settings → Developer settings → Fine-grained tokens → Generate new token</em>.</li>
+        <li>Under "Repository access", pick "Only select repositories" and choose this repo.</li>
+        <li>Under "Permissions → Repository permissions", set <strong>Contents</strong> to <strong>Read and write</strong>.</li>
+        <li>Generate it, copy it, and paste it above. It's stored only on this device.</li>
+      </ol>
+    </details>
+
+    <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
+
     <div class="field">
       <label for="importText">Paste titles, or paste JSON from Jellyfin</label>
       <textarea id="importText" rows="8" placeholder="One title per line, e.g.&#10;Paddington 2&#10;The Grand Budapest Hotel&#10;&#10;...or paste a whole Jellyfin API response and it'll pull the titles out automatically." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:15px; font-family:inherit; resize:vertical;"></textarea>
@@ -192,23 +224,108 @@
   <button data-tab="check" class="active">Check</button>
   <button data-tab="library">Library</button>
   <button data-tab="add">Add</button>
-  <button data-tab="import">Import</button>
+  <button data-tab="import">Sync</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.2/dist/quagga.min.js"></script>
 <script>
 (function() {
-  const STORE_KEY = 'reelcheck-library';
+  const CONFIG_KEY = 'reelcheck-config';
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
-    catch (e) { return []; }
+  function loadConfig() {
+    try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+    catch (e) { return {}; }
   }
-  function save(items) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+  function saveConfig(cfg) {
+    try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
     catch (e) { console.error('Storage error', e); }
   }
-  let library = load();
+  let cfg = loadConfig();
+  let library = [];
+  let sha = null;
+  let ready = false; // true once we've successfully loaded from GitHub at least once
+
+  function configComplete(c) { return !!(c.owner && c.repo && c.path && c.token); }
+  function apiUrl(c) { return `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${encodeURIComponent(c.path)}`; }
+  function ghHeaders(c) { return { Authorization: `token ${c.token}`, Accept: 'application/vnd.github+json' }; }
+  function b64Encode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m,p)=>String.fromCharCode('0x'+p))); }
+  function b64Decode(str) { return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+
+  const statusEl = document.getElementById('syncStatus');
+  function setStatus(msg, kind) {
+    statusEl.textContent = msg;
+    statusEl.style.borderColor = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : 'var(--line)';
+    statusEl.style.color = kind === 'ok' ? 'var(--teal)' : kind === 'err' ? 'var(--rust)' : 'var(--ink-dim)';
+  }
+
+  async function fetchLibrary() {
+    if (!configComplete(cfg)) { setStatus('Not connected yet — fill in the details below.', null); return; }
+    setStatus('Connecting to GitHub…', null);
+    try {
+      const res = await fetch(apiUrl(cfg), { headers: ghHeaders(cfg) });
+      if (res.status === 200) {
+        const data = await res.json();
+        sha = data.sha;
+        library = data.content ? (JSON.parse(b64Decode(data.content)) || []) : [];
+        ready = true;
+        setStatus(`Connected — ${library.length} title${library.length === 1 ? '' : 's'} loaded.`, 'ok');
+      } else if (res.status === 404) {
+        library = []; sha = null; ready = true;
+        setStatus('Connected — no file yet, one will be created when you add a title.', 'ok');
+      } else if (res.status === 401 || res.status === 403) {
+        setStatus('Could not connect — check your token and its permissions.', 'err');
+      } else {
+        setStatus(`Could not connect — GitHub returned ${res.status}.`, 'err');
+      }
+    } catch (e) {
+      setStatus('Could not reach GitHub. Check your connection.', 'err');
+    }
+    renderAll();
+  }
+
+  async function pushLibrary(retry) {
+    if (!configComplete(cfg)) return false;
+    try {
+      const body = { message: 'Update library via Reel Check', content: b64Encode(JSON.stringify(library, null, 2)) };
+      if (sha) body.sha = sha;
+      const res = await fetch(apiUrl(cfg), { method: 'PUT', headers: { ...ghHeaders(cfg), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (res.ok) {
+        const data = await res.json();
+        sha = data.content.sha;
+        return true;
+      }
+      if (res.status === 409 && !retry) {
+        // sha out of date — refetch latest then retry once
+        const r2 = await fetch(apiUrl(cfg), { headers: ghHeaders(cfg) });
+        if (r2.ok) { const d2 = await r2.json(); sha = d2.sha; return pushLibrary(true); }
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function renderAll() {
+    renderLibrary();
+    if (checkInput.value.trim()) checkInput.dispatchEvent(new Event('input'));
+  }
+
+  document.getElementById('ghConnectBtn').addEventListener('click', () => {
+    cfg = {
+      owner: document.getElementById('ghOwner').value.trim(),
+      repo: document.getElementById('ghRepo').value.trim(),
+      path: document.getElementById('ghPath').value.trim() || 'library.json',
+      token: document.getElementById('ghToken').value.trim()
+    };
+    if (!configComplete(cfg)) { setStatus('Fill in all four fields first.', 'err'); return; }
+    saveConfig(cfg);
+    fetchLibrary();
+  });
+
+  // Prefill saved settings and connect automatically if we have them
+  if (cfg.owner) document.getElementById('ghOwner').value = cfg.owner;
+  if (cfg.repo) document.getElementById('ghRepo').value = cfg.repo;
+  if (cfg.path) document.getElementById('ghPath').value = cfg.path;
+  if (cfg.token) document.getElementById('ghToken').value = cfg.token;
+  if (configComplete(cfg)) fetchLibrary();
 
   // Tabs
   document.querySelectorAll('nav button').forEach(btn => {
@@ -295,7 +412,7 @@
       .sort((a,b) => a.title.localeCompare(b.title));
     libCount.textContent = library.length;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${library.length ? 'No matches.' : 'Nothing added yet — use the Add tab.'}</div>`;
+      libList.innerHTML = `<div class="empty">${!ready ? 'Connect to GitHub in the Sync tab first.' : (library.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
       return;
     }
     libList.innerHTML = items.map(i => `
@@ -306,10 +423,15 @@
         </div>
         <button data-id="${i.id}" class="del">Remove</button>
       </div>`).join('');
-    libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', () => {
+    libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', async () => {
+      const removed = library.find(i => i.id === b.dataset.id);
+      const prev = library;
       library = library.filter(i => i.id !== b.dataset.id);
-      save(library);
       renderLibrary();
+      const msg = document.getElementById('backupMsg');
+      const ok = await pushLibrary();
+      if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = `Removed "${removed ? removed.title : ''}".`; }
+      else { library = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — removal undone.'; }
     }));
   }
   libFilter.addEventListener('input', renderLibrary);
@@ -334,7 +456,7 @@
     const msg = document.getElementById('backupMsg');
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const items = JSON.parse(reader.result);
         if (!Array.isArray(items)) throw new Error('not an array');
@@ -347,10 +469,12 @@
             added++;
           }
         });
-        save(library);
         renderLibrary();
-        msg.style.color = 'var(--teal)';
-        msg.textContent = `Restored ${added} title${added === 1 ? '' : 's'} from backup.`;
+        msg.style.color = 'var(--ink-dim)';
+        msg.textContent = 'Saving to GitHub…';
+        const ok = await pushLibrary();
+        msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+        msg.textContent = ok ? `Restored ${added} title${added === 1 ? '' : 's'} from backup.` : 'Merged locally, but could not save to GitHub. Try again.';
       } catch (err) {
         msg.style.color = 'var(--rust)';
         msg.textContent = 'That file didn\'t look like a valid backup.';
@@ -387,9 +511,10 @@
     return raw.split(/\r?\n/).flatMap(line => line.split(',')).map(s => s.trim()).filter(Boolean);
   }
 
-  document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importBtn').addEventListener('click', async () => {
     const raw = document.getElementById('importText').value;
     const msg = document.getElementById('importMsg');
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub above first.'; return; }
     const titles = extractTitles(raw);
     if (!titles.length) {
       msg.style.color = 'var(--rust)';
@@ -406,24 +531,28 @@
         added++;
       }
     });
-    save(library);
-    msg.style.color = 'var(--teal)';
-    msg.textContent = `Added ${added} new title${added === 1 ? '' : 's'} (${titles.length - added} already in your library).`;
-    document.getElementById('importText').value = '';
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+    const ok = await pushLibrary();
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok ? `Added ${added} new title${added === 1 ? '' : 's'} (${titles.length - added} already in your library).` : 'Could not save to GitHub. Try again.';
+    if (ok) document.getElementById('importText').value = '';
+    renderLibrary();
   });
 
-  document.getElementById('saveBtn').addEventListener('click', () => {
+  document.getElementById('saveBtn').addEventListener('click', async () => {
     const title = document.getElementById('addTitle').value.trim();
     const format = document.getElementById('addFormat').value;
     const barcode = document.getElementById('addBarcode').value.trim();
     const msg = document.getElementById('saveMsg');
+    if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub in the Sync tab first.'; return; }
     if (!title) { msg.style.color = 'var(--rust)'; msg.textContent = 'Enter a title first.'; return; }
     library.push({ id: Date.now().toString(36), title, format, barcode, added: new Date().toISOString() });
-    save(library);
-    msg.style.color = 'var(--teal)';
-    msg.textContent = `Added "${title}" to your library.`;
-    document.getElementById('addTitle').value = '';
-    document.getElementById('addBarcode').value = '';
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+    const ok = await pushLibrary();
+    msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
+    msg.textContent = ok ? `Added "${title}" to your library.` : 'Could not save to GitHub. Try again.';
+    if (ok) { document.getElementById('addTitle').value = ''; document.getElementById('addBarcode').value = ''; }
+    renderLibrary();
   });
 })();
 </script>
