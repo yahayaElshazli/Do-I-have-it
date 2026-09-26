@@ -359,6 +359,7 @@
     return { ok: false, status: res.status };
   }
 
+  // GitHub errors are surfaced in the relevant Admin/action message.
   let lastGitHubError = '';
 
   async function describeGitHubResponse(res) {
@@ -926,7 +927,7 @@
     const msg = document.getElementById('backupMsg');
     const ok = await pushFile('items');
     if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = `Removed "${removed ? removed.title : ''}".`; }
-    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — removal undone.'; }
+    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = `Could not save to GitHub — removal undone. ${lastGitHubError || ''}`.trim(); }
   }
 
   document.getElementById('fetchCoversBtn').addEventListener('click', async () => {
@@ -960,7 +961,7 @@
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = 'Library cleared.'; }
-    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — clear undone.'; }
+    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = `Could not save to GitHub — clear undone. ${lastGitHubError || ''}`.trim(); }
   });
 
   // ---- Backup export / restore (covers both files) ----
@@ -1035,7 +1036,7 @@
     msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('wishlist');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Added "${title}" to your wishlist.` : 'Could not save to GitHub. Try again.';
+    msg.textContent = ok ? `Added "${title}" to your wishlist.` : (lastGitHubError || 'Could not save to GitHub. Try again.');
     if (ok) document.getElementById('wishTitle').value = '';
     renderWishlist();
   });
@@ -1086,7 +1087,7 @@
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Added "${title}" to your library.` : 'Could not save to GitHub. Try again.';
+    msg.textContent = ok ? `Added "${title}" to your library.` : (lastGitHubError || 'Could not save to GitHub. Try again.');
     if (ok) { addTitle.value = ''; document.getElementById('addBarcode').value = ''; dupWarn.style.display = 'none'; }
     renderLibrary();
   });
@@ -1126,7 +1127,7 @@
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Updated ${updated} existing item${updated===1?'':'s'} and added ${fresh.length} new item${fresh.length===1?'':'s'} (movies, series and collections).` : 'Could not save to GitHub. Try again.';
+    msg.textContent = ok ? `Updated ${updated} existing item${updated===1?'':'s'} and added ${fresh.length} new item${fresh.length===1?'':'s'} (movies, series and collections).` : (lastGitHubError || 'Could not save to GitHub. Try again.');
     if (ok) document.getElementById('importText').value = '';
     renderLibrary();
   });
