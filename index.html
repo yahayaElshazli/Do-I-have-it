@@ -174,14 +174,29 @@
       <input type="text" id="ghWishPath" placeholder="wishlist.json" autocomplete="off" value="wishlist.json">
     </div>
     <div class="field">
-      <label for="ghToken">Personal access token</label>
+      <label for="ghToken">GitHub personal access token</label>
       <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
+    </div>
+    <div class="field">
+      <label for="tmdbToken">TMDB API Read Access Token</label>
+      <input type="password" id="tmdbToken" placeholder="eyJ..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Connect</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Sync now</button>
     </div>
-    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-b — if this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
+    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-c — TMDB-only cover lookup. If this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
+    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Covers are sourced from TMDB. Your TMDB token is stored only on this device with the other app settings.</p>
+
+    <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
+      <summary style="cursor:pointer; color:var(--ink);">How to get a TMDB token</summary>
+      <ol style="padding-left:18px; margin-top:10px;">
+        <li>Create or sign in to your account on TMDB.</li>
+        <li>Open your account settings and go to the <em>API</em> section.</li>
+        <li>Copy the <strong>API Read Access Token</strong> and paste it above.</li>
+      </ol>
+      <p style="margin-top:8px;">TMDB provides this API free for non-commercial use with the required attribution.</p>
+    </details>
 
     <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
       <summary style="cursor:pointer; color:var(--ink);">How to get a token</summary>
@@ -193,6 +208,7 @@
       </ol>
     </details>
     <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Library and wishlist are now saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
+    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
 
     <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
 
@@ -253,7 +269,7 @@
   let activeFormat = 'all';
   let cacheState = loadCache() || { cfg: null, items: [], wishlist: [], itemsPending: false, wishlistPending: false, timestamp: null };
 
-  function configComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath && c.token); }
+  function configComplete(c) { return !!(c.owner && c.repo && c.libraryPath && c.wishlistPath && c.token && c.tmdbToken); }
   function sameRepo(c1, c2) { return c1 && c2 && c1.owner === c2.owner && c1.repo === c2.repo && c1.libraryPath === c2.libraryPath && c1.wishlistPath === c2.wishlistPath; }
   function pathFor(kind) { return kind === 'items' ? cfg.libraryPath : cfg.wishlistPath; }
   function apiUrlFor(path) { return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path)}`; }
@@ -348,14 +364,33 @@
     renderAll();
   }
 
+  // TMDB is the only cover source. The browser calls TMDB directly using
+  // the user's API Read Access Token; no Apple/iTunes lookup or fallback is used.
   async function fetchCover(title) {
+    if (!cfg.tmdbToken) return null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
     try {
-      const res = await fetch(`https://itunes.apple.com/search?media=movie&limit=1&term=${encodeURIComponent(title)}`);
+      const url = 'https://api.themoviedb.org/3/search/movie' +
+        '?query=' + encodeURIComponent(title) +
+        '&include_adult=false&language=en-GB&page=1';
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${cfg.tmdbToken}`
+        },
+        signal: controller.signal
+      });
       if (!res.ok) return null;
       const d = await res.json();
-      const r = d.results && d.results[0];
-      return r && r.artworkUrl100 ? r.artworkUrl100.replace('100x100bb', '300x300bb') : null;
-    } catch (e) { return null; }
+      const results = Array.isArray(d.results) ? d.results : [];
+      const r = results.find(x => x && x.poster_path) || results[0];
+      return r && r.poster_path ? `https://image.tmdb.org/t/p/w500${r.poster_path}` : null;
+    } catch (e) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   function guessFormat(o) {
@@ -407,7 +442,8 @@
       repo: document.getElementById('ghRepo').value.trim(),
       libraryPath: document.getElementById('ghPath').value.trim() || 'library.json',
       wishlistPath: document.getElementById('ghWishPath').value.trim() || 'wishlist.json',
-      token: document.getElementById('ghToken').value.trim()
+      token: document.getElementById('ghToken').value.trim(),
+      tmdbToken: document.getElementById('tmdbToken').value.trim()
     };
     if (!configComplete(cfg)) { setStatus('Fill in all the fields first.', 'err'); return; }
     saveConfig(cfg);
@@ -420,6 +456,7 @@
   if (cfg.libraryPath) document.getElementById('ghPath').value = cfg.libraryPath;
   if (cfg.wishlistPath) document.getElementById('ghWishPath').value = cfg.wishlistPath;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
+  if (cfg.tmdbToken) document.getElementById('tmdbToken').value = cfg.tmdbToken;
   if (configComplete(cfg)) fetchAll();
 
   // ---- Tabs ----
