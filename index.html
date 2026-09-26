@@ -112,6 +112,7 @@
     <div id="libList"></div>
     <div style="display:flex; gap:10px; margin-top:18px;">
       <button class="btn-secondary" id="fetchCoversBtn" style="flex:1;">🖼 Fetch missing covers</button>
+      <button class="btn-secondary" id="clearLibBtn" style="flex:1;">🗑 Clear library</button>
     </div>
     <div style="display:flex; gap:10px; margin-top:10px;">
       <button class="btn-secondary" id="exportBtn" style="flex:1;">⬇ Export backup</button>
@@ -180,6 +181,7 @@
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Connect</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Sync now</button>
     </div>
+    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-26-b — if this doesn't match what I tell you, your phone/GitHub still has an old copy.</p>
 
     <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
       <summary style="cursor:pointer; color:var(--ink);">How to get a token</summary>
@@ -367,15 +369,30 @@
     return 'DVD';
   }
 
+  function looksLikeJson(raw) {
+    return /"Items"\s*:|"Name"\s*:|"MediaSources"\s*:/.test(raw);
+  }
+  function tryParseJson(raw) {
+    const trimmed = raw.trim();
+    const candidates = [trimmed];
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) candidates.push('{' + trimmed + '}');
+    const all = candidates.flatMap(c => [c, c.replace(/,\s*([}\]])\s*$/, '$1')]);
+    for (const c of all) { try { return JSON.parse(c); } catch (e) {} }
+    return null;
+  }
+
   function extractItems(raw) {
     raw = raw.trim();
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
-      if (arr) return arr.map(o => ({ title: (o && (o.Name || o.name || o.title)) || '', format: guessFormat(o || {}) })).filter(x => x.title);
-    } catch (e) { /* not JSON */ }
-    return raw.split(/\r?\n/).flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean).map(t => ({ title: t, format: 'Unknown' }));
+    if (!raw) return { items: [], jsonError: false };
+    if (looksLikeJson(raw)) {
+      const parsed = tryParseJson(raw);
+      if (parsed) {
+        const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.Items) ? parsed.Items : null);
+        if (arr) return { items: arr.map(o => ({ title: (o && (o.Name || o.name || o.title)) || '', format: guessFormat(o || {}) })).filter(x => x.title), jsonError: false };
+      }
+      return { items: [], jsonError: true };
+    }
+    return { items: raw.split(/\r?\n/).flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean).map(t => ({ title: t, format: 'Unknown' })), jsonError: false };
   }
 
   function renderAll() {
@@ -556,6 +573,19 @@
     msg.textContent = ok ? 'Covers updated.' : 'Fetched covers, but could not save to GitHub.';
   });
 
+  document.getElementById('clearLibBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('backupMsg');
+    if (!data.items.length) { msg.style.color = 'var(--teal)'; msg.textContent = 'Library is already empty.'; return; }
+    if (!confirm(`Remove all ${data.items.length} items from your library? This cannot be undone.`)) return;
+    const prev = data.items;
+    data.items = [];
+    renderLibrary();
+    msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
+    const ok = await pushFile('items');
+    if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = 'Library cleared.'; }
+    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = 'Could not save to GitHub — clear undone.'; }
+  });
+
   // ---- Backup export / restore (covers both files) ----
   document.getElementById('exportBtn').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -678,10 +708,12 @@
     const msg = document.getElementById('importMsg');
     if (!configComplete(cfg)) { msg.style.color = 'var(--rust)'; msg.textContent = 'Connect to GitHub above first.'; return; }
     const incoming = extractItems(raw);
-    if (!incoming.length) { msg.style.color = 'var(--rust)'; msg.textContent = 'Could not find any titles in that text.'; return; }
+    if (incoming.jsonError) { msg.style.color = 'var(--rust)'; msg.textContent = "That looked like Jellyfin JSON but wasn't complete — copy the entire response, starting from the very first { and ending at the final }."; return; }
+    const list = incoming.items;
+    if (!list.length) { msg.style.color = 'var(--rust)'; msg.textContent = 'Could not find any titles in that text.'; return; }
     const existing = new Set(data.items.map(i => i.title.toLowerCase()));
     const fresh = [];
-    incoming.forEach(t => {
+    list.forEach(t => {
       const key = t.title.toLowerCase();
       if (!existing.has(key)) { fresh.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: t.title, format: t.format, barcode: '', cover: null, added: new Date().toISOString() }); existing.add(key); }
     });
@@ -694,7 +726,7 @@
     msg.textContent = 'Saving to GitHub…';
     const ok = await pushFile('items');
     msg.style.color = ok ? 'var(--teal)' : 'var(--rust)';
-    msg.textContent = ok ? `Added ${fresh.length} new title${fresh.length===1?'':'s'} (${incoming.length - fresh.length} already in your library).` : 'Could not save to GitHub. Try again.';
+    msg.textContent = ok ? `Added ${fresh.length} new title${fresh.length===1?'':'s'} (${list.length - fresh.length} already in your library).` : 'Could not save to GitHub. Try again.';
     if (ok) document.getElementById('importText').value = '';
     renderLibrary();
   });
