@@ -186,12 +186,12 @@
 
 </main>
 
-<nav>
-  <button data-tab="check" class="active">Check</button>
-  <button data-tab="library">Library</button>
-  <button data-tab="wishlist">Wishlist</button>
-  <button data-tab="add">Add</button>
-  <button id="menuBtn" class="nav-menu-btn" aria-label="Open menu" aria-expanded="false"><span aria-hidden="true">☰</span><span>Menu</span></button>
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button type="button" data-tab="check" class="active" aria-label="Check"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span class="sr-only">Check</span></button>
+  <button type="button" data-tab="library" aria-label="Library"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18V5a2 2 0 0 1 2-2h4a3 3 0 0 1 3 3 3 3 0 0 1 3-3h4a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1h-5a3 3 0 0 0-3 3 3 3 0 0 0-3-3H4a1 1 0 0 1-1-1Z"></path></svg><span class="sr-only">Library</span></button>
+  <button type="button" data-tab="wishlist" aria-label="Wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg><span class="sr-only">Wishlist</span></button>
+  <button type="button" data-tab="add" aria-label="Add"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span class="sr-only">Add</span></button>
+  <button type="button" id="menuBtn" class="nav-menu-btn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg><span class="sr-only">Menu</span></button>
 </nav>
 
 <script defer src="./js/state.js"></script>

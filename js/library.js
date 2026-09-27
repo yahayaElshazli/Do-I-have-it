@@ -96,8 +96,8 @@
       libList.innerHTML = `<div class="libgrid">${items.map(i => `
         <div class="gridcard">
           ${coverOrPlaceholder(i, 'cover')}
+          <span class="grid-format">${escapeHtml(i.format || 'Unknown')}</span>
           <div class="gtitle">${escapeHtml(displayTitle(i))}</div>
-          <div class="sub" style="padding:0 10px 8px;">${escapeHtml(mediaLabel(i))}</div>
         </div>`).join('')}</div>`;
     } else {
       libList.innerHTML = items.map(i => `
