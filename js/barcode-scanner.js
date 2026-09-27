@@ -30,17 +30,31 @@
 
   async function lookupBarcode(code) {
     const clean = String(code || '').replace(/\D/g, '');
-    if (!clean) return null;
+    if (!clean) return { error: 'invalid', message: 'The scanner did not read a valid barcode. Try again with the full barcode inside the frame.' };
     try {
       const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(clean)}`, {
         headers: { Accept: 'application/json' }, cache: 'no-store'
       });
-      if (!res.ok) return null;
-      const d = await res.json();
+      let d = null;
+      try { d = await res.json(); } catch (e) {}
+      if (!res.ok) {
+        const detail = d && (d.message || d.reason || d.code);
+        return { error: 'http', message: `The barcode lookup service returned HTTP ${res.status}${detail ? ` (${detail})` : ''}. Please try again later or enter the title manually.` };
+      }
+      if (d && d.code && !['OK', 'SUCCESS'].includes(String(d.code).toUpperCase())) {
+        const codeText = String(d.code).toUpperCase();
+        const message = d.message || d.reason || '';
+        const limited = /limit|rate/i.test(`${codeText} ${message}`);
+        return { error: limited ? 'limited' : 'lookup', message: limited ? 'The free barcode lookup limit has been reached. Try again later or enter the title manually.' : 'The barcode service could not look up this code. Try again later or enter the title manually.' };
+      }
       const item = d && Array.isArray(d.items) ? d.items[0] : null;
-      if (!item || !item.title) return null;
+      if (!item || !item.title) return { error: 'not-found', message: 'This barcode was read, but the free product database has no title for this disc. You can search for it by title or add it manually.' };
       return { title: item.title, ean: item.ean || clean, upc: item.upc || '', gtin: item.gtin || '', description: item.description || '' };
-    } catch (e) { return null; }
+    } catch (e) {
+      // Browsers intentionally hide CORS and mixed-content details from scripts.
+      // Do not expose exception text because it can contain request details.
+      return { error: 'network', message: 'The barcode lookup could not be reached. Check your internet connection or browser restrictions, then try again.' };
+    }
   }
 
   function normalizedTitle(title) {
@@ -77,12 +91,17 @@
 
     scanResult.innerHTML = '<div class="result" style="background:var(--panel);border:1px solid var(--line);"><strong>Looking up disc title…</strong>Please wait.</div>';
     const product = await lookupBarcode(clean);
-    const libraryMatch = product && findLibraryTitle(product.title);
+    const libraryMatch = product.title && findLibraryTitle(product.title);
     if (libraryMatch) { showOwnedBarcodeMatch(libraryMatch); return; }
-    if (product) {
+    if (product.title) {
       scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">You can add this title from the Add tab.</div></div>`;
     } else {
-      scanResult.innerHTML = '<div class="result missing"><strong>Could not identify this disc</strong>No title was found for this barcode. Try scanning again or enter the title in the Add tab.</div>';
+      scanResult.innerHTML = `<div class="result missing"><strong>${product.error === 'not-found' ? 'Barcode read, title unavailable' : 'Barcode lookup unavailable'}</strong>${escapeHtml(product.message)}<button type="button" id="scanAddManually" class="btn-secondary" style="margin-top:10px;width:100%;">Enter title manually</button></div>`;
+      document.getElementById('scanAddManually').addEventListener('click', () => {
+        document.getElementById('addBarcode').value = clean;
+        document.querySelector('nav button[data-tab="add"]').click();
+        document.getElementById('addTitle').focus();
+      });
     }
   }
 

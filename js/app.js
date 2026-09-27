@@ -124,7 +124,7 @@ function renderAll() {
       const msg = document.getElementById('addScanMsg');
       msg.textContent = 'Looking up title…';
       const product = await lookupBarcode(code);
-      if (product) {
+      if (product.title) {
         const libraryMatch = findLibraryTitle(product.title);
         const title = libraryMatch ? libraryMatch.title : product.title;
         document.getElementById('addTitle').value = title;
@@ -133,7 +133,7 @@ function renderAll() {
         msg.textContent = libraryMatch ? `Already in your library: ${title}` : `Found: ${title}`;
       } else {
         msg.style.color = 'var(--rust)';
-        msg.textContent = 'No title was found for this barcode. Enter the title manually.';
+        msg.textContent = product.message;
       }
     });
   });
