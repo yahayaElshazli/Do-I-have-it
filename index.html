@@ -756,7 +756,6 @@
 
   // ---- Barcode scanning ----
   let scanning = false;
-  let scannerTarget = null;
   let scannerButton = null;
   let scannerBox = null;
   let scannerOnCode = null;
@@ -825,7 +824,7 @@
       return;
     }
 
-    scannerTarget = boxEl; scannerButton = buttonEl; scannerBox = boxEl; scannerOnCode = onCode;
+    scannerButton = buttonEl; scannerBox = boxEl; scannerOnCode = onCode;
     scanning = true;
     scannerInitializing = true;
     boxEl.style.display = 'block';
@@ -850,7 +849,10 @@
           stopScan();
           return;
         }
-        Quagga.start();
+        try { Quagga.start(); } catch (startError) {
+          scannerMessage(boxEl, startError && startError.message ? startError.message : 'Could not start the camera stream.', true);
+          stopScan();
+        }
       });
     } catch (err) {
       scannerInitializing = false;
@@ -868,7 +870,7 @@
       scannerButton.textContent = scannerButton.id === 'addScanBtn' ? '📷 Scan barcode' : '📷 Scan a barcode instead';
     }
     if (scannerBox) scannerBox.style.display = 'none';
-    scannerTarget = scannerButton = scannerBox = scannerOnCode = null;
+    scannerButton = scannerBox = scannerOnCode = null;
   }
 
   // ---- Library tab ----
