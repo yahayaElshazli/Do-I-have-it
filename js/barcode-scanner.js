@@ -23,6 +23,8 @@
   let scannerButton = null;
   let scannerBox = null;
   let scannerOnCode = null;
+  let scannerCandidateCode = null;
+  let scannerCandidateCount = 0;
   const scanBox = document.getElementById('scanBox');
   const scanResult = document.getElementById('scanResult');
 
@@ -41,19 +43,46 @@
     } catch (e) { return null; }
   }
 
+  function normalizedTitle(title) {
+    return String(title || '')
+      .normalize('NFKD')
+      .replace(/\([^)]*\)|\[[^\]]*\]/g, ' ')
+      .replace(/\b(?:dvd|blu[ -]?ray|4k|uhd|region\s*[0-9a-z]+|\d{4})\b/gi, ' ')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/^(?:the|a|an)\s+/, '')
+      .trim();
+  }
+
+  function findLibraryTitle(title) {
+    const key = normalizedTitle(title);
+    if (!key) return null;
+    return data.items.find(i => i.mediaType !== 'BoxSet' && normalizedTitle(i.title) === key) || null;
+  }
+
+  function barcodeMatches(savedCode, scannedCode) {
+    const saved = String(savedCode || '').replace(/\D/g, '');
+    const scanned = String(scannedCode || '').replace(/\D/g, '');
+    return !!saved && (saved === scanned || (saved.length === 12 && `0${saved}` === scanned) || (scanned.length === 12 && `0${scanned}` === saved));
+  }
+
+  function showOwnedBarcodeMatch(item) {
+    scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(item.title)} — ${escapeHtml(item.format || 'Unknown')}</div>`;
+  }
+
   async function handleCheckBarcode(code) {
     const clean = String(code || '').replace(/\D/g, '');
-    const match = data.items.find(i => String(i.barcode || '').replace(/\D/g, '') === clean);
-    if (match) {
-      scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(match.title)} — ${escapeHtml(match.format || 'Unknown')}</div>`;
-      return;
-    }
-    scanResult.innerHTML = `<div class="result" style="background:var(--panel);border:1px solid var(--line);"><strong>Looking up barcode…</strong>${escapeHtml(clean)}</div>`;
+    const codeMatch = data.items.find(i => i.mediaType !== 'BoxSet' && barcodeMatches(i.barcode, clean));
+    if (codeMatch) { showOwnedBarcodeMatch(codeMatch); return; }
+
+    scanResult.innerHTML = '<div class="result" style="background:var(--panel);border:1px solid var(--line);"><strong>Looking up disc title…</strong>Please wait.</div>';
     const product = await lookupBarcode(clean);
+    const libraryMatch = product && findLibraryTitle(product.title);
+    if (libraryMatch) { showOwnedBarcodeMatch(libraryMatch); return; }
     if (product) {
-      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">Barcode ${escapeHtml(clean)} — safe to buy, or add it in the Add tab.</div></div>`;
+      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">You can add this title from the Add tab.</div></div>`;
     } else {
-      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>Barcode ${escapeHtml(clean)} — no title was found in the barcode database. You can add it in the Add tab.</div>`;
+      scanResult.innerHTML = '<div class="result missing"><strong>Could not identify this disc</strong>No title was found for this barcode. Try scanning again or enter the title in the Add tab.</div>';
     }
   }
 
@@ -91,6 +120,8 @@
     scannerButton = buttonEl; scannerBox = boxEl; scannerOnCode = onCode;
     scanning = true;
     scannerInitializing = true;
+    scannerCandidateCode = null;
+    scannerCandidateCount = 0;
     boxEl.style.display = 'block';
     buttonEl.textContent = '✕ Stop scanning';
     try {
@@ -98,6 +129,11 @@
       Quagga.onDetected(d => {
         const code = d && d.codeResult && d.codeResult.code;
         if (!code || !scanning || scannerBox !== boxEl) return;
+        if (code === scannerCandidateCode) scannerCandidateCount++;
+        else { scannerCandidateCode = code; scannerCandidateCount = 1; }
+        // Require two matching frames so a one-frame digit misread is less
+        // likely to send the wrong product code to the lookup service.
+        if (scannerCandidateCount < 2) return;
         const cb = scannerOnCode;
         stopScan();
         if (cb) cb(code);
@@ -135,4 +171,5 @@
     }
     if (scannerBox) scannerBox.style.display = 'none';
     scannerButton = scannerBox = scannerOnCode = null;
+    scannerCandidateCode = null; scannerCandidateCount = 0;
   }
