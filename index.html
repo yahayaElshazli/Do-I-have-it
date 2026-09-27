@@ -1134,11 +1134,15 @@
     if (incoming.jsonError) { msg.style.color = 'var(--rust)'; msg.textContent = "That looked like Jellyfin JSON but wasn't complete — copy the entire response, starting from the very first { and ending at the final }."; return; }
     const list = incoming.items;
     if (!list.length) { msg.style.color = 'var(--rust)'; msg.textContent = 'Could not find any titles in that text.'; return; }
-    const existing = new Map(data.items.map(i => [i.title.toLowerCase(), i]));
+    // Jellyfin may return a Movie and a BoxSet with the same title (for
+    // example, Dune). Include type and year in the identity so the collection
+    // record cannot overwrite the movie that the Library displays.
+    const importKey = i => `${i.mediaType || 'Movie'}|${String(i.title || '').trim().toLowerCase()}|${i.productionYear || ''}`;
+    const existing = new Map(data.items.map(i => [importKey(i), i]));
     const fresh = [];
     let updated = 0;
     list.forEach(t => {
-      const key = t.title.toLowerCase();
+      const key = importKey(t);
       const existingItem = existing.get(key);
       if (existingItem) {
         Object.keys(t).forEach(k => {
