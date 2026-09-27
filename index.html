@@ -135,7 +135,6 @@
       <button class="chip active" data-type="all">All</button>
       <button class="chip" data-type="Movie">Movies</button>
       <button class="chip" data-type="Series">Series</button>
-      <button class="chip" data-type="BoxSet">Collections</button>
     </div>
     <div class="chipRow" id="formatChips">
       <button class="chip active" data-fmt="all">All formats</button>
@@ -992,29 +991,25 @@
     document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
     const q = libFilter.value.trim().toLowerCase();
 
-    // Collections are top-level library entries. Movies that belong to a
-    // collection represented in the library are shown inside that collection,
-    // not as duplicate top-level rows. Movies whose collection record is absent
-    // remain visible on their own.
-    const topLevelItems = data.items.filter(i => !hasVisibleCollection(i));
+    // Keep every movie visible as its own library entry, including movies
+    // that Jellyfin groups into BoxSet collections. BoxSet records are hidden.
+    const topLevelItems = data.items.filter(i => i.mediaType !== 'BoxSet');
 
     const items = topLevelItems
       .filter(i => activeType === 'all' || (i.mediaType || 'Movie') === activeType)
       .filter(i => i.title.toLowerCase().includes(q))
-      .filter(i => activeType === 'BoxSet' || activeFormat === 'all' || (i.format || 'Unknown') === activeFormat)
+      .filter(i => activeFormat === 'all' || (i.format || 'Unknown') === activeFormat)
       .sort((a,b) => a.title.localeCompare(b.title));
 
     const movieCount = topLevelItems.filter(i => (i.mediaType || 'Movie') === 'Movie').length;
     const seriesCount = topLevelItems.filter(i => i.mediaType === 'Series').length;
-    const collectionCount = topLevelItems.filter(i => i.mediaType === 'BoxSet').length;
 
     libCount.textContent = activeType === 'all' ? topLevelItems.length : items.length;
     document.querySelector('#typeChips [data-type="all"]').textContent = `All (${topLevelItems.length})`;
     document.querySelector('#typeChips [data-type="Movie"]').textContent = `Movies (${movieCount})`;
     document.querySelector('#typeChips [data-type="Series"]').textContent = `Series (${seriesCount})`;
-    document.querySelector('#typeChips [data-type="BoxSet"]').textContent = `Collections (${collectionCount})`;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : (data.items.length ? 'No matches.' : 'Nothing added yet — use the Add tab.')}</div>`;
+      libList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : (topLevelItems.length ? 'No matches.' : (data.items.length ? 'No movies or series in the library yet.' : 'Nothing added yet — use the Add tab.'))}</div>`;
       return;
     }
     if (view === 'grid') {
@@ -1022,7 +1017,7 @@
         <div class="gridcard" data-id="${i.id}">
           ${coverOrPlaceholder(i, 'cover')}
           <div class="gtitle">${escapeHtml(i.title)}</div>
-          <div class="sub" style="padding:0 10px 8px;">${escapeHtml(mediaLabel(i))}${i.mediaType === 'BoxSet' ? ` · ${collectionMemberCount(i)} film${collectionMemberCount(i)===1?'':'s'}` : ''}</div>
+          <div class="sub" style="padding:0 10px 8px;">${escapeHtml(mediaLabel(i))}</div>
           <button class="gdel" data-id="${i.id}">✕</button>
         </div>`).join('')}</div>`;
       libList.querySelectorAll('.gdel').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
@@ -1033,7 +1028,7 @@
             ${coverOrPlaceholder(i, 'thumb')}
             <div class="meta">
               <div class="title">${escapeHtml(i.title)}</div>
-              <div class="sub">${escapeHtml(mediaLabel(i))}${i.mediaType === 'BoxSet' ? ` · ${collectionMemberCount(i)} film${collectionMemberCount(i)===1?'':'s'}` : (metaLine(i) ? ` · ${escapeHtml(metaLine(i))}` : '')}</div>
+              <div class="sub">${escapeHtml(mediaLabel(i))}${metaLine(i) ? ` · ${escapeHtml(metaLine(i))}` : ''}</div>
             </div>
             <button type="button" class="expand" aria-label="Show details">⌄</button>
             <button type="button" data-id="${escapeHtml(i.id)}" class="del">Remove</button>
