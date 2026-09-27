@@ -8,9 +8,9 @@
     const wishMatch = data.wishlist.filter(i => i.title.toLowerCase().includes(q));
     let html = '';
     if (matches.length) {
-      html += matches.map(m => `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(m.title)} — ${m.format}</div>`).join('');
+      html += matches.map(checkLibraryResult).join('');
     } else {
-      html += `<div class="result missing"><strong>Not in your library</strong>No match for "${escapeHtml(checkInput.value.trim())}" — safe to buy!</div>`;
+      html += `<div class="result safe-buy"><strong>Safe to buy</strong>No match for "${escapeHtml(checkInput.value.trim())}" in your library.</div>`;
     }
     if (wishMatch.length) {
       html += wishMatch.map(w => `<div class="result wish"><strong>📌 On your wishlist</strong>${escapeHtml(w.title)}</div>`).join('');
@@ -27,6 +27,16 @@
   let scannerCandidateCount = 0;
   const scanBox = document.getElementById('scanBox');
   const scanResult = document.getElementById('scanResult');
+
+  function checkLibraryResult(item) {
+    const title = escapeHtml(item.title);
+    const format = escapeHtml(item.format || 'Unknown');
+    const rating = Number(item.communityRating);
+    if (String(item.format || '').trim().toLowerCase() === 'dvd' && Number.isFinite(rating) && rating > 7.5) {
+      return `<div class="result upgrade"><strong>Worth upgrading</strong>${title} — DVD · ★ ${rating.toFixed(1)}</div>`;
+    }
+    return `<div class="result do-not-buy"><strong>Do not buy</strong>You already have ${title} — ${format}.</div>`;
+  }
 
   async function lookupBarcode(code) {
     const clean = String(code || '').replace(/\D/g, '');
@@ -81,7 +91,7 @@
   }
 
   function showOwnedBarcodeMatch(item) {
-    scanResult.innerHTML = `<div class="result own"><strong>✓ You own this</strong>${escapeHtml(item.title)} — ${escapeHtml(item.format || 'Unknown')}</div>`;
+    scanResult.innerHTML = checkLibraryResult(item);
   }
 
   async function handleCheckBarcode(code) {
@@ -94,7 +104,7 @@
     const libraryMatch = product.title && findLibraryTitle(product.title);
     if (libraryMatch) { showOwnedBarcodeMatch(libraryMatch); return; }
     if (product.title) {
-      scanResult.innerHTML = `<div class="result missing"><strong>Not in your library</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">You can add this title from the Add tab.</div></div>`;
+      scanResult.innerHTML = `<div class="result safe-buy"><strong>Safe to buy</strong>${escapeHtml(product.title)}<div style="margin-top:5px;font-size:12px;color:var(--ink-dim);">This title was not found in your library. You can add it from the Add tab.</div></div>`;
     } else {
       scanResult.innerHTML = `<div class="result missing"><strong>${product.error === 'not-found' ? 'Barcode read, title unavailable' : 'Barcode lookup unavailable'}</strong>${escapeHtml(product.message)}<button type="button" id="scanAddManually" class="btn-secondary" style="margin-top:10px;width:100%;">Enter title manually</button></div>`;
       document.getElementById('scanAddManually').addEventListener('click', () => {

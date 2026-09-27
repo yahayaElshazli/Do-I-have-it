@@ -41,6 +41,8 @@
   .result { margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 15px; line-height: 1.4; }
   .result.own { background: rgba(79,143,131,0.18); border: 1px solid var(--teal); }
   .result.missing { background: rgba(181,86,60,0.15); border: 1px solid var(--rust); }
+  .result.safe-buy, .result.upgrade { background: rgba(79,143,131,0.18); border: 1px solid var(--teal); }
+  .result.do-not-buy { background: rgba(181,86,60,0.15); border: 1px solid var(--rust); }
   .result.wish { background: rgba(212,162,76,0.15); border: 1px solid var(--amber); margin-top: 8px; }
   .result strong { display: block; font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 2px; }
   .scanner-viewport { margin-top: 14px; border-radius: 12px; overflow: hidden; position: relative; background: #000; display: none; aspect-ratio: 4/3; }
