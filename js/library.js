@@ -94,16 +94,14 @@
     }
     if (view === 'grid') {
       libList.innerHTML = `<div class="libgrid">${items.map(i => `
-        <div class="gridcard" data-id="${i.id}">
+        <div class="gridcard">
           ${coverOrPlaceholder(i, 'cover')}
           <div class="gtitle">${escapeHtml(displayTitle(i))}</div>
           <div class="sub" style="padding:0 10px 8px;">${escapeHtml(mediaLabel(i))}</div>
-          <button class="gdel" data-id="${i.id}">✕</button>
         </div>`).join('')}</div>`;
-      libList.querySelectorAll('.gdel').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.id)));
     } else {
       libList.innerHTML = items.map(i => `
-        <div class="libitem" data-id="${escapeHtml(i.id)}">
+        <div class="libitem">
           <div class="libitem-main" role="button" tabindex="0" aria-expanded="false">
             ${coverOrPlaceholder(i, 'thumb')}
             <div class="meta">
@@ -111,7 +109,6 @@
               <div class="sub">${escapeHtml(mediaLabel(i))}${metaLine(i) ? ` · ${escapeHtml(metaLine(i))}` : ''}</div>
             </div>
             <button type="button" class="expand" aria-label="Show details">⌄</button>
-            <button type="button" data-id="${escapeHtml(i.id)}" class="del">Remove</button>
           </div>
           <div class="libitem-details"><div class="detail-grid">${detailRows(i)}</div></div>
         </div>`).join('');
@@ -123,22 +120,10 @@
           row.querySelector('.expand').textContent = open ? '⌃' : '⌄';
           row.querySelector('.expand').setAttribute('aria-label', open ? 'Hide details' : 'Show details');
         };
-        row.addEventListener('click', e => { if (!e.target.closest('.del')) toggle(); });
+        row.addEventListener('click', toggle);
         row.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) { e.preventDefault(); toggle(); } });
       });
-      libList.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeItem(b.dataset.id); }));
     }
-  }
-
-  async function removeItem(id) {
-    const removed = data.items.find(i => i.id === id);
-    const prev = data.items;
-    data.items = data.items.filter(i => i.id !== id);
-    renderLibrary();
-    const msg = document.getElementById('backupMsg');
-    const ok = await pushFile('items');
-    if (ok) { msg.style.color = 'var(--teal)'; msg.textContent = `Removed "${removed ? removed.title : ''}".`; }
-    else { data.items = prev; renderLibrary(); msg.style.color = 'var(--rust)'; msg.textContent = `Could not save to GitHub — removal undone. ${lastGitHubError || ''}`.trim(); }
   }
 
   document.getElementById('fetchCoversBtn').addEventListener('click', async () => {
