@@ -84,8 +84,8 @@
       </select>
     </div>
     <div class="field">
-      <label for="addBarcode">Barcode (optional, lets you scan next time)</label>
-      <input type="text" id="addBarcode" placeholder="Scan or type UPC/EAN" autocomplete="off">
+      <label for="addBarcode">Barcode (optional)</label>
+      <input type="text" id="addBarcode" placeholder="Enter UPC/EAN if known" autocomplete="off">
     </div>
     <button class="btn-primary" id="saveBtn">Add to library</button>
     <p id="saveMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
@@ -106,7 +106,7 @@
       <p id="backupMsg" style="color:var(--teal); font-size:13px; margin-top:10px; margin-bottom:0;"></p>
     </div>
 
-    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Library loads automatically from library.json. These settings are only needed for saving changes and TMDB cover lookups.</div>
+    <div id="syncStatus" style="padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; color:var(--ink-dim); margin-bottom:16px;">Connection status appears here.</div>
 
     <div class="field">
       <label for="ghOwner">GitHub username</label>
@@ -125,7 +125,7 @@
       <input type="text" id="ghWishPath" placeholder="wishlist.json" autocomplete="off" value="wishlist.json">
     </div>
     <div class="field">
-      <label for="ghToken">GitHub personal access token <span style="color:var(--ink-dim);font-weight:normal;">(only needed to save changes)</span></label>
+      <label for="ghToken">GitHub personal access token</label>
       <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
     </div>
     <div class="field">
@@ -136,30 +136,6 @@
       <button class="btn-primary" id="ghConnectBtn" style="flex:1;">Save settings</button>
       <button class="btn-secondary" id="resyncBtn" style="flex:1;">Reload library</button>
     </div>
-    <p style="color:var(--ink-dim); font-size:11px; margin-top:8px;">Build: 2026-09-27 — simplified movie and series library. If this does not match, your phone may still be showing an older cached copy.</p>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">Covers are sourced from TMDB. Your TMDB token is stored only on this device with the other app settings.</p>
-
-    <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
-      <summary style="cursor:pointer; color:var(--ink);">How to get a TMDB token</summary>
-      <ol style="padding-left:18px; margin-top:10px;">
-        <li>Create or sign in to your account on TMDB.</li>
-        <li>Open your account settings and go to the <em>API</em> section.</li>
-        <li>Copy the <strong>API Read Access Token</strong> and paste it above.</li>
-      </ol>
-      <p style="margin-top:8px;">TMDB provides this API free for non-commercial use with the required attribution.</p>
-    </details>
-
-    <details style="margin-top:16px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
-      <summary style="cursor:pointer; color:var(--ink);">How to get a token</summary>
-      <ol style="padding-left:18px; margin-top:10px;">
-        <li>On GitHub: <em>Settings → Developer settings → Fine-grained tokens → Generate new token</em>.</li>
-        <li>Under "Repository access", pick "Only select repositories" and choose this repo.</li>
-        <li>Under "Permissions → Repository permissions", set <strong>Contents</strong> to <strong>Read and write</strong>.</li>
-        <li>Generate it, copy it, and paste it above. It's stored only on this device.</li>
-      </ol>
-    </details>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">The library is loaded directly from library.json when the app opens, so no GitHub sync is needed just to view it. Keep library.json and wishlist.json alongside the app on GitHub Pages. A GitHub token is only needed when the app saves changes. Library and wishlist are saved as two separate files in your repo — <code>library.json</code> only ever holds titles you own, <code>wishlist.json</code> holds ones you're hunting for. If you had a wishlist saved inside the old combined file, it's moved across automatically the first time you connect.</p>
-    <p style="color:var(--ink-dim); font-size:12px; margin-top:10px;">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
 
     <hr style="border:none; border-top:1px solid var(--line); margin:24px 0;">
 
@@ -170,18 +146,6 @@
     <button class="btn-primary" id="importBtn">Import / update from Jellyfin</button>
     <p id="importMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
 
-    <details style="margin-top:22px; color:var(--ink-dim); font-size:13px; line-height:1.6;">
-      <summary style="cursor:pointer; color:var(--ink);">How to get a title list out of Jellyfin</summary>
-      <p style="margin-top:10px;">Fastest way (no plugin needed):</p>
-      <ol style="padding-left:18px;">
-        <li>In Jellyfin, open <em>Dashboard → API Keys</em> and create a key.</li>
-        <li>Find your user ID: <em>Dashboard → Users</em>, click your user — it's in the page URL.</li>
-        <li>Visit this in your browser (fill in your server, key, and user ID):<br>
-        <code style="word-break:break-all; font-size:11px;">http://SERVER:8096/Users/USER_ID/Items?api_key=API_KEY&Recursive=true&IncludeItemTypes=Movie,Series,BoxSet&CollapseBoxSetItems=false&Fields=MediaSources,ProviderIds,ParentId&SortBy=SortName</code></li>
-        <li>Select all the JSON text that appears, copy it, and paste it into the box above.</li>
-      </ol>
-      <p>The <code>&Fields=MediaSources,ProviderIds,ParentId</code> part supplies format details and collection IDs. Movies and series stay as individual library items; BoxSet records become Collections, and movies with a TMDB collection ID are linked to the matching collection when available. Plain lines of text work too, just without format guessing.</p>
-    </details>
   </section>
 
 </main>
