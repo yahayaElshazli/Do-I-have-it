@@ -31,9 +31,10 @@
       <input type="text" id="checkInput" placeholder="e.g. Paddington 2" autocomplete="off">
     </div>
     <div id="checkResults"></div>
-    <button class="btn-secondary" id="scanBtn" style="margin-top:6px;">📷 Scan a barcode instead</button>
-    <div id="scanBox" class="scanner-viewport"><div class="scanline"></div></div>
-    <div id="scanResult"></div>
+    <section class="check-wishlist" aria-labelledby="checkWishlistHeading">
+      <h2 id="checkWishlistHeading">On your wishlist</h2>
+      <div id="checkWishlistGrid"></div>
+    </section>
   </section>
 
   <section id="tab-library" class="tab">
@@ -86,8 +87,6 @@
       <label for="addBarcode">Barcode (optional, lets you scan next time)</label>
       <input type="text" id="addBarcode" placeholder="Scan or type UPC/EAN" autocomplete="off">
     </div>
-    <button class="btn-secondary" id="addScanBtn" style="margin-bottom:12px;">📷 Scan barcode</button>
-    <div id="addScanBox"><div id="addScanHost"></div></div>
     <button class="btn-primary" id="saveBtn">Add to library</button>
     <p id="saveMsg" style="color:var(--teal); font-size:13px; margin-top:10px;"></p>
   </section>
@@ -195,12 +194,11 @@
   <button id="menuBtn" class="nav-menu-btn" aria-label="Open menu" aria-expanded="false"><span aria-hidden="true">☰</span><span>Menu</span></button>
 </nav>
 
-<script defer src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.2/dist/quagga.min.js"></script>
 <script defer src="./js/state.js"></script>
 <script defer src="./js/github.js"></script>
 <script defer src="./js/tmdb.js"></script>
 <script defer src="./js/jellyfin-import.js"></script>
-<script defer src="./js/barcode-scanner.js"></script>
+<script defer src="./js/check.js"></script>
 <script defer src="./js/library.js"></script>
 <script defer src="./js/navigation.js"></script>
 <script defer src="./js/app.js"></script>

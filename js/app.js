@@ -1,7 +1,8 @@
-function renderAll() {
+  function renderAll() {
     renderLibrary();
     renderWishlist();
     if (checkInput.value.trim()) checkInput.dispatchEvent(new Event('input'));
+    else renderCheckWishlist();
   }
 
   document.getElementById('ghConnectBtn').addEventListener('click', () => {
@@ -73,21 +74,77 @@ function renderAll() {
   });
 
   // ---- Wishlist tab ----
+  const wishlistCoverFetches = new Map();
+  let wishlistCoverSaveTimer = null;
+
+  function renderCheckWishlist() {
+    const host = document.getElementById('checkWishlistGrid');
+    if (!host) return;
+    const q = checkInput.value.trim().toLowerCase();
+    const items = [...data.wishlist].filter(i => !q || i.title.toLowerCase().includes(q)).sort((a,b) => a.title.localeCompare(b.title));
+    if (!items.length) {
+      host.innerHTML = `<div class="empty">${q ? 'No wishlist titles match this search.' : 'Nothing on your wishlist yet.'}</div>`;
+      return;
+    }
+    host.innerHTML = `<div class="check-wishlist-grid">${items.map(i => `
+      <div class="check-wishlist-card">
+        ${i.cover ? `<img src="${escapeHtml(i.cover)}" alt="${escapeHtml(i.title)} poster" loading="lazy">` : '<div class="wish-poster-placeholder">🎬</div>'}
+        <div class="check-wishlist-title">${escapeHtml(i.title)}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  function queueWishlistCoverSave() {
+    clearTimeout(wishlistCoverSaveTimer);
+    wishlistCoverSaveTimer = setTimeout(async () => {
+      if (configComplete(cfg)) await pushFile('wishlist');
+    }, 700);
+  }
+
   function renderWishlist() {
     const wishList = document.getElementById('wishList');
     const items = [...data.wishlist].sort((a,b) => a.title.localeCompare(b.title));
-    if (!items.length) { wishList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : 'Nothing on your wishlist yet.'}</div>`; return; }
-    wishList.innerHTML = items.map(i => `
-      <div class="libitem">
-        <div class="meta"><div class="title">${escapeHtml(i.title)}</div></div>
-        <button data-id="${i.id}" class="delw">Remove</button>
+    if (!items.length) {
+      wishList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : 'Nothing on your wishlist yet.'}</div>`;
+      renderCheckWishlist();
+      return;
+    }
+    wishList.innerHTML = items.map((i,index) => `
+      <div class="wishlist-row">
+        <div class="wishlist-poster-wrap">
+          ${i.cover ? `<img class="wishlist-poster" src="${escapeHtml(i.cover)}" alt="${escapeHtml(i.title)} poster" loading="lazy">` : `<div class="wishlist-poster wishlist-poster-placeholder" data-placeholder-index="${index}">🎬</div>`}
+        </div>
+        <div class="wishlist-title">${escapeHtml(i.title)}</div>
+        <button data-id="${escapeHtml(String(i.id || ''))}" class="delw">Remove</button>
       </div>`).join('');
+    renderCheckWishlist();
     wishList.querySelectorAll('.delw').forEach(b => b.addEventListener('click', async () => {
       const prev = data.wishlist;
       data.wishlist = data.wishlist.filter(i => i.id !== b.dataset.id);
       renderWishlist();
       if (!(await pushFile('wishlist'))) { data.wishlist = prev; renderWishlist(); }
     }));
+
+    if (!cfg.tmdbToken) return;
+    items.forEach((item,index) => {
+      if (item.cover || !item.title) return;
+      const key = String(item.id || item.title).toLowerCase();
+      if (wishlistCoverFetches.has(key)) return;
+      const request = fetchCover(item.title, 'Movie').then(cover => {
+        if (!cover || !data.wishlist.includes(item)) return;
+        item.cover = cover;
+        const currentItems = [...data.wishlist].sort((a,b) => a.title.localeCompare(b.title));
+        const currentIndex = currentItems.indexOf(item);
+        const placeholder = currentIndex >= 0 ? wishList.querySelector(`[data-placeholder-index="${currentIndex}"]`) : null;
+        if (placeholder) {
+          const img = document.createElement('img');
+          img.className = 'wishlist-poster'; img.src = cover; img.alt = `${item.title} poster`; img.loading = 'lazy';
+          placeholder.replaceWith(img);
+        }
+        renderCheckWishlist();
+        queueWishlistCoverSave();
+      }).finally(() => wishlistCoverFetches.delete(key));
+      wishlistCoverFetches.set(key, request);
+    });
   }
   document.getElementById('wishAddBtn').addEventListener('click', async () => {
     const title = document.getElementById('wishTitle').value.trim();
@@ -112,30 +169,6 @@ function renderAll() {
     const match = data.items.find(i => i.title.toLowerCase().includes(q) || q.includes(i.title.toLowerCase()));
     if (match) { dupWarn.style.display = 'block'; dupWarn.textContent = `⚠ You might already have "${match.title}".`; }
     else dupWarn.style.display = 'none';
-  });
-
-  document.getElementById('addScanBtn').addEventListener('click', () => {
-    const host = document.getElementById('addScanHost');
-    const btn = document.getElementById('addScanBtn');
-    if (scanning) { stopScan(); host.innerHTML=''; return; }
-    host.innerHTML = '<div id="scanBoxAdd" class="scanner-viewport" style="display:block;"><div class="scanline"></div></div><p id="addScanMsg" style="color:var(--ink-dim);font-size:12px;margin-top:8px;">Point the camera at the barcode.</p>';
-    startScan(document.getElementById('scanBoxAdd'), btn, async code => {
-      document.getElementById('addBarcode').value = code;
-      const msg = document.getElementById('addScanMsg');
-      msg.textContent = 'Looking up title…';
-      const product = await lookupBarcode(code);
-      if (product.title) {
-        const libraryMatch = findLibraryTitle(product.title);
-        const title = libraryMatch ? libraryMatch.title : product.title;
-        document.getElementById('addTitle').value = title;
-        document.getElementById('addTitle').dispatchEvent(new Event('input'));
-        msg.style.color = libraryMatch ? 'var(--teal)' : 'var(--ink-dim)';
-        msg.textContent = libraryMatch ? `Already in your library: ${title}` : `Found: ${title}`;
-      } else {
-        msg.style.color = 'var(--rust)';
-        msg.textContent = product.message;
-      }
-    });
   });
 
   document.getElementById('saveBtn').addEventListener('click', async () => {

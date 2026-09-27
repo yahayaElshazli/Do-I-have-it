@@ -14,7 +14,6 @@
     adminMenuBtn.classList.add('active');
     menuBtn.classList.add('active');
     closeMenu();
-    stopScan();
   }
   menuBtn.addEventListener('click', () => {
     const open = !drawer.classList.contains('open');
@@ -34,7 +33,6 @@
       adminMenuBtn.classList.remove('active');
       menuBtn.classList.remove('active');
       closeMenu();
-      stopScan();
       if (btn.dataset.tab === 'library') renderLibrary();
       if (btn.dataset.tab === 'wishlist') renderWishlist();
     });
