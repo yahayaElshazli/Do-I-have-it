@@ -23,7 +23,7 @@
 
   function coverOrPlaceholder(i, cls) {
     return i.cover
-      ? `<img class="${cls}" src="${i.cover}" alt="" loading="lazy">`
+      ? `<img class="${cls}" src="${escapeHtml(i.cover)}" alt="" loading="lazy">`
       : `<div class="${cls} ${cls === 'thumb' ? 'thumb-ph' : ''}" ${cls==='cover' ? 'style="display:flex;align-items:center;justify-content:center;"' : ''}>${escapeHtml(i.title[0] || '?')}</div>`;
   }
 

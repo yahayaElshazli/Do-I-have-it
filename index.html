@@ -126,7 +126,10 @@
     </div>
     <div class="field">
       <label for="ghToken">GitHub personal access token</label>
-      <input type="text" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px;">
+      <div style="position:relative;">
+        <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" style="font-family:monospace; font-size:13px; padding-right:52px;">
+        <button type="button" id="ghTokenToggle" aria-label="Show token" aria-pressed="false" style="position:absolute; right:4px; top:4px; bottom:4px; width:44px; padding:0; background:transparent; border:1px solid var(--line); color:var(--ink-dim); font-size:12px;">Show</button>
+      </div>
     </div>
     <div class="field">
       <label for="tmdbToken">TMDB API Read Access Token</label>

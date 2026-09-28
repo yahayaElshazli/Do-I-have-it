@@ -19,6 +19,16 @@
     });
   document.getElementById('resyncBtn').addEventListener('click', fetchAll);
 
+  document.getElementById('ghTokenToggle').addEventListener('click', () => {
+    const input = document.getElementById('ghToken');
+    const btn = document.getElementById('ghTokenToggle');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? 'Show' : 'Hide';
+    btn.setAttribute('aria-label', showing ? 'Show token' : 'Hide token');
+    btn.setAttribute('aria-pressed', String(!showing));
+  });
+
   if (cfg.owner) document.getElementById('ghOwner').value = cfg.owner;
   if (cfg.repo) document.getElementById('ghRepo').value = cfg.repo;
   if (cfg.libraryPath) document.getElementById('ghPath').value = cfg.libraryPath;
@@ -50,14 +60,14 @@
         let added = 0;
         incomingItems.forEach(i => {
           if (i && i.title && !existing.has(i.title.toLowerCase())) {
-            data.items.push({ ...i, id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', cover: i.cover || null, added: i.added || new Date().toISOString() });
+            data.items.push({ ...i, id: i.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6), title: i.title, format: i.format || 'Unknown', barcode: i.barcode || '', cover: sanitizeCoverUrl(i.cover), added: i.added || new Date().toISOString() });
             existing.add(i.title.toLowerCase());
             added++;
           }
         });
         const wExisting = new Set(data.wishlist.map(i => i.title.toLowerCase()));
         let addedWish = 0;
-        incomingWishlist.forEach(i => { if (i && i.title && !wExisting.has(i.title.toLowerCase())) { data.wishlist.push(i); wExisting.add(i.title.toLowerCase()); addedWish++; } });
+        incomingWishlist.forEach(i => { if (i && i.title && !wExisting.has(i.title.toLowerCase())) { data.wishlist.push({ ...i, cover: sanitizeCoverUrl(i.cover) }); wExisting.add(i.title.toLowerCase()); addedWish++; } });
         renderAll();
         msg.style.color = 'var(--ink-dim)'; msg.textContent = 'Saving to GitHub…';
         const okItems = await pushFile('items');

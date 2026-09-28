@@ -55,6 +55,14 @@ const CONFIG_KEY = 'reelcheck-config';
   function wishlistLinkHtml(title) {
     return `<span class="wish-action"><a href="#" class="wish-link" role="button" data-title="${escapeHtml(title)}">Add to wishlist</a>.</span>`;
   }
+  // Only accept http(s) image URLs from untrusted sources (restored backups,
+  // pasted import data). Escaping already prevents markup injection, but this
+  // stops anything odd (javascript:, data:, etc.) from being stored at all.
+  function sanitizeCoverUrl(url) {
+    if (!url) return null;
+    try { const u = new URL(String(url), document.baseURI); return /^https?:$/.test(u.protocol) ? u.href : null; }
+    catch (e) { return null; }
+  }
   function normalizeItems(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.items) ? raw.items : []); }
   function normalizeWishlist(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.wishlist) ? raw.wishlist : []); }
 
