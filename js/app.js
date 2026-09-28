@@ -146,6 +146,26 @@
       wishlistCoverFetches.set(key, request);
     });
   }
+  // ---- "Add to wishlist" links (Safe to buy message + empty Library) ----
+  document.addEventListener('click', async e => {
+    const link = e.target.closest('.wish-link');
+    if (!link) return;
+    e.preventDefault();
+    if (link.dataset.busy) return;
+    const title = (link.dataset.title || '').trim();
+    const wrap = link.closest('.wish-action') || link;
+    if (!title) return;
+    if (!configComplete(cfg)) { link.textContent = 'Open Admin to set up GitHub saving'; return; }
+    const key = normalizeSearch(title);
+    if (data.wishlist.some(w => normalizeSearch(w.title) === key)) { wrap.textContent = 'Already on your wishlist.'; return; }
+    link.dataset.busy = '1';
+    link.textContent = 'Saving…';
+    data.wishlist.push({ id: Date.now().toString(36), title, added: new Date().toISOString() });
+    const ok = await pushFile('wishlist');
+    renderWishlist();
+    wrap.textContent = ok ? 'Added to wishlist ✓' : 'Saved on this device, but syncing to GitHub failed.';
+  });
+
   document.getElementById('wishAddBtn').addEventListener('click', async () => {
     const title = document.getElementById('wishTitle').value.trim();
     const msg = document.getElementById('wishMsg');

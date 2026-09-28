@@ -89,7 +89,11 @@
     document.querySelector('#typeChips [data-type="Movie"]').textContent = `Movies (${movieCount})`;
     document.querySelector('#typeChips [data-type="Series"]').textContent = `Series (${seriesCount})`;
     if (!items.length) {
-      libList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : (topLevelItems.length ? 'No matches.' : (data.items.length ? 'No movies or series in the library yet.' : 'Nothing added yet — use the Add tab.'))}</div>`;
+      const filterText = libFilter.value.trim();
+      const noMatches = filterText && normalizeSearch(filterText)
+        ? `No matches for "${escapeHtml(filterText)}" in your library. ${wishlistLinkHtml(filterText)}`
+        : 'No matches.';
+      libList.innerHTML = `<div class="empty">${!ready ? 'Open Admin to configure GitHub saving.' : (topLevelItems.length ? noMatches : (data.items.length ? 'No movies or series in the library yet.' : 'Nothing added yet — use the Add tab.'))}</div>`;
       return;
     }
     if (view === 'grid') {

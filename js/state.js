@@ -50,6 +50,11 @@ const CONFIG_KEY = 'reelcheck-config';
   function titleMatches(title, normalizedQuery) {
     return !normalizedQuery || normalizeSearch(title).includes(normalizedQuery);
   }
+  // "Add to wishlist" link shown in the Safe to buy message and the empty Library
+  // state. The click is handled in app.js.
+  function wishlistLinkHtml(title) {
+    return `<span class="wish-action"><a href="#" class="wish-link" role="button" data-title="${escapeHtml(title)}">Add to wishlist</a>.</span>`;
+  }
   function normalizeItems(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.items) ? raw.items : []); }
   function normalizeWishlist(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.wishlist) ? raw.wishlist : []); }
 
