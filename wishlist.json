@@ -54,9 +54,20 @@
     "cover": "https://image.tmdb.org/t/p/w500/rSdOua3wKMEaFWDcKAYWRjXQWOt.jpg"
   },
   {
+    "id": "mulm9m67",
+    "title": "Notting Hill",
+    "added": "2026-09-28T19:04:30.079Z",
+    "cover": "https://image.tmdb.org/t/p/w500/hHRIf2XHeQMbyRb3HUx19SF5Ujw.jpg"
+  },
+  {
     "id": "mulnzcj1",
     "title": "Sing",
     "added": "2026-09-28T19:52:30.253Z",
     "cover": "https://image.tmdb.org/t/p/w500/rwopfpHqPCYBSgBuZwkaXXqHp14.jpg"
+  },
+  {
+    "id": "mulo8359",
+    "title": "Cruella",
+    "added": "2026-09-28T19:59:17.997Z"
   }
 ]
