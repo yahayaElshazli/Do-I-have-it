@@ -80,8 +80,8 @@
   function renderCheckWishlist() {
     const host = document.getElementById('checkWishlistGrid');
     if (!host) return;
-    const q = checkInput.value.trim().toLowerCase();
-    const items = [...data.wishlist].filter(i => !q || i.title.toLowerCase().includes(q)).sort((a,b) => a.title.localeCompare(b.title));
+    const q = normalizeSearch(checkInput.value);
+    const items = [...data.wishlist].filter(i => titleMatches(i.title, q)).sort((a,b) => a.title.localeCompare(b.title));
     if (!items.length) {
       host.innerHTML = `<div class="empty">${q ? 'No wishlist titles match this search.' : 'Nothing on your wishlist yet.'}</div>`;
       return;
@@ -164,9 +164,9 @@
   const addTitle = document.getElementById('addTitle');
   const dupWarn = document.getElementById('dupWarn');
   addTitle.addEventListener('input', () => {
-    const q = addTitle.value.trim().toLowerCase();
+    const q = normalizeSearch(addTitle.value);
     if (q.length < 3) { dupWarn.style.display = 'none'; return; }
-    const match = data.items.find(i => i.title.toLowerCase().includes(q) || q.includes(i.title.toLowerCase()));
+    const match = data.items.find(i => { const t = normalizeSearch(i.title); return t && (t.includes(q) || q.includes(t)); });
     if (match) { dupWarn.style.display = 'block'; dupWarn.textContent = `⚠ You might already have "${match.title}".`; }
     else dupWarn.style.display = 'none';
   });

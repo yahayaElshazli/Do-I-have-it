@@ -2,10 +2,10 @@
   const checkInput = document.getElementById('checkInput');
   const checkResults = document.getElementById('checkResults');
   checkInput.addEventListener('input', () => {
-    const q = checkInput.value.trim().toLowerCase();
+    const q = normalizeSearch(checkInput.value);
     if (!q) checkResults.innerHTML = '';
     else {
-      const matches = data.items.filter(i => i.title.toLowerCase().includes(q));
+      const matches = data.items.filter(i => titleMatches(i.title, q));
       if (matches.length) checkResults.innerHTML = matches.map(checkLibraryResult).join('');
       else checkResults.innerHTML = `<div class="result safe-buy"><strong>Safe to buy</strong>No match for "${escapeHtml(checkInput.value.trim())}" in your library.</div>`;
     }

@@ -69,7 +69,7 @@
   function renderLibrary() {
     document.getElementById('viewGridBtn').classList.toggle('active', view === 'grid');
     document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
-    const q = libFilter.value.trim().toLowerCase();
+    const q = normalizeSearch(libFilter.value);
 
     // Keep every movie visible as its own library entry, including movies
     // that Jellyfin groups into BoxSet collections. BoxSet records are hidden.
@@ -77,7 +77,7 @@
 
     const items = topLevelItems
       .filter(i => activeType === 'all' || (i.mediaType || 'Movie') === activeType)
-      .filter(i => i.title.toLowerCase().includes(q))
+      .filter(i => titleMatches(i.title, q))
       .filter(i => activeFormat === 'all' || (i.format || 'Unknown') === activeFormat)
       .sort((a,b) => a.title.localeCompare(b.title));
 

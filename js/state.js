@@ -37,6 +37,19 @@ const CONFIG_KEY = 'reelcheck-config';
   function b64Encode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m,p)=>String.fromCharCode('0x'+p))); }
   function b64Decode(str) { return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
   function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  // Search helper: lowercases, strips accents, and drops every character that
+  // isn't a letter or number (hyphens, colons, apostrophes, spaces, etc.), so
+  // "spiderman", "spider man" and "Spider-Man: Homecoming" all line up.
+  function normalizeSearch(s) {
+    return String(s || '')
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^\p{L}\p{N}]+/gu, '');
+  }
+  function titleMatches(title, normalizedQuery) {
+    return !normalizedQuery || normalizeSearch(title).includes(normalizedQuery);
+  }
   function normalizeItems(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.items) ? raw.items : []); }
   function normalizeWishlist(raw) { return Array.isArray(raw) ? raw : (raw && Array.isArray(raw.wishlist) ? raw.wishlist : []); }
 
